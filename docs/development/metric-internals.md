@@ -240,4 +240,3 @@ Geometry-first, confidence-independent. More expensive: O(N³) per image.
 
 **Supported in `compute_map`** — runs `linear_sum_assignment` per image then maps
 results back to confidence-sorted index order for the P-R curve.
-
