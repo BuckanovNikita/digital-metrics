@@ -130,7 +130,7 @@ The `"ultralytics"` backend also fills `cm` / `class_labels` via
 ported; conf 0.25 / IoU 0.45, transposed to the sklearn row=GT/col=pred convention);
 `"torchmetrics"` has no CM (`cm` is `None`).
 
-- **`"ultralytics"`** (`backends/ultralytics_metrics.py`, the `ultralytics` extra: `uv sync --extra ultralytics`) — YOLO-comparable. Boxes go through a faithful
+- **`"ultralytics"`** (`backends/ultralytics_metrics.py`, the `ultralytics` extra: `uv sync --extra ultralytics`; user-facing install name `pip install digital-metrics[ultralytics]`) — YOLO-comparable. Boxes go through a faithful
   per-threshold re-match (`_match_predictions`, a numpy port of
   `BaseValidator.match_predictions`) and Ultralytics' `box_iou`, then Ultralytics'
   own `ap_per_class`. Equivalence to `model.val()` requires identical prediction/GT
@@ -138,7 +138,7 @@ ported; conf 0.25 / IoU 0.45, transposed to the sklearn row=GT/col=pred conventi
   smoothed 1000-point P-R curve at the single global max-mean-F1 threshold (IoU
   0.50) for unthresholded summaries. Native assignment can differ; see the
   backend-specific comparison contracts in `docs/why_prf1_differs.md`.
-- **`"torchmetrics"`** (`backends/torchmetrics_metrics.py`, the `torchmetrics` extra: `uv sync --extra torchmetrics`) — general COCO mAP from torchmetrics'
+- **`"torchmetrics"`** (`backends/torchmetrics_metrics.py`, the `torchmetrics` extra: `uv sync --extra torchmetrics`; user-facing install name `pip install digital-metrics[torchmetrics]`) — general COCO mAP from torchmetrics'
   `MeanAveragePrecision` (pycocotools backend). AP is torchmetrics' own
   `map_50`/`map_75`/`map` per class. torchmetrics is AP-native with no headline
   P/R/F1, so we derive them the YOLO way: off its `extended_summary` IoU-0.50
@@ -153,7 +153,7 @@ fields); `compute_ultralytics_metrics` still returns those objects.
 
 `tracking/clearml_tracker.py` is a **standalone** layer sitting on top of a
 finished `Evaluation` — the core evaluation code knows nothing about ClearML.
-`clearml` is an optional extra (the `clearml` extra: `uv sync --extra clearml`), imported
+`clearml` is an optional extra (the `clearml` extra: `uv sync --extra clearml`; user-facing install name `pip install digital-metrics[clearml]`), imported
 lazily; the core install stays torch/ClearML-free.
 
 ```python

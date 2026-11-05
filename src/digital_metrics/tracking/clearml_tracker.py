@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 CORE_METRICS = ("precision", "recall", "f1_score", "ap50", "ap75", "ap50_95")
 
 # Metrics whose class average must ignore NaN (AP is NaN for classes absent from
-# the evaluated split — see the mAP notes in CLAUDE.md).
+# the evaluated split — see the mAP notes in docs/development/metric-internals.md).
 _NAN_AWARE = ("ap50", "ap75", "ap50_95")
 
 # The confidence-interval PNGs get_dashboards writes into its output directory.

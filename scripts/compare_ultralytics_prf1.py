@@ -18,7 +18,7 @@ Ultralytics' headline P/R/F1 are read at IoU 0.50 off a 1000-point interpolated
 P-R curve at the single global confidence that maximises the smoothed mean
 per-class F1. The matching is equivalent, so residual per-class differences come
 only from how that operating point is read — interpolated/smoothed curve vs our
-realizable confidence tie-group boundaries (CLAUDE.md: "Do not try to make P/R/F1
+realizable confidence tie-group boundaries (AGENTS.md: "Do not try to make P/R/F1
 numerically match YOLO's console output").
 
 Run:
