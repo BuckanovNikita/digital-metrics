@@ -36,13 +36,7 @@ Never use `pip` directly. Always use `uv`. Develop optional backends with `uv sy
 
 ## Checks
 
-Enforced by the pre-commit hooks (`.pre-commit-config.yaml`):
-
-```bash
-uv run --locked --no-sync ruff check .
-uv run --locked --no-sync mypy src/ scripts/local_release.py
-uv run --locked --no-sync pytest
-```
+Run `uv run --locked --no-sync prek run --all-files`; `.pre-commit-config.yaml` owns the verification tool inventory.
 
 Recommended, not hooked (formatting and coverage are not enforced; the repo has no CI):
 

@@ -55,7 +55,7 @@ pythonpath = ["src"]
 addopts = "--import-mode=importlib"
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
 # Vendored Claude skill/plugin dirs (local artifacts, not project source).
 extend-exclude = [".agents", "agent", ".claude"]
@@ -84,9 +84,10 @@ dev = [
     "pandas-stubs>=3.0.3.260530",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
-    "pre-commit>=4.3,<5",
+    "prek==0.5.10",
     "python-semantic-release>=10.5,<11",
     "ruff>=0.15.16",
+    "pyyaml>=6.0.3",
 ]
 
 [tool.semantic_release]

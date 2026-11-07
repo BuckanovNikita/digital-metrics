@@ -6,6 +6,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -94,10 +95,13 @@ def install_hooks(root: Path) -> None:
             f"Existing post-commit hook at {hook} is not owned by this project. "
             "Preserve it and integrate its behavior manually before installing this launcher."
         )
-    run(root, sys.executable, "-m", "pre_commit", "install", "--hook-type", "pre-commit")
+    prek = shutil.which("prek")
+    if prek is None:
+        raise ReleaseError("prek is unavailable; sync the project development environment first.")
+    run(root, prek, "install", "--hook-type", "pre-commit")
     launcher = (
         f"#!/usr/bin/env bash\n{HOOK_MARKER}\n"
-        f"exec {shlex.quote(sys.executable)} -m pre_commit run "
+        f"exec {shlex.quote(prek)} run "
         "--hook-stage post-commit --all-files\n"
     )
     with tempfile.NamedTemporaryFile(mode="w", dir=hook.parent, delete=False) as stream:
@@ -201,9 +205,7 @@ def finish_tag(root: Path, attempt: Attempt, *, retrying: bool) -> None:
     if retrying:
         run(
             root,
-            sys.executable,
-            "-m",
-            "pre_commit",
+            "prek",
             "run",
             "--all-files",
             "--hook-stage",

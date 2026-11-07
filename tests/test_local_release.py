@@ -475,7 +475,7 @@ def test_pre_commit_refreshes_history_without_staging(release_repo: Path) -> Non
     git(repo, "switch", "-c", "feature/changelog")
     commit(repo, "feat: historical change")
     install_changelog_hook(repo)
-    result = command(repo, sys.executable, "-m", "pre_commit", "run", "--all-files", check=False)
+    result = command(repo, "prek", "run", "--all-files", check=False)
     assert result.returncode == 1
     changelog = (repo / "CHANGELOG.md").read_text()
     assert "historical change" in changelog.casefold()
@@ -483,7 +483,7 @@ def test_pre_commit_refreshes_history_without_staging(release_repo: Path) -> Non
     assert "[0.5.3]" in changelog
     assert git(repo, "ls-files", "CHANGELOG.md") == ""
     git(repo, "add", "CHANGELOG.md")
-    result = command(repo, sys.executable, "-m", "pre_commit", "run", "--all-files", check=False)
+    result = command(repo, "prek", "run", "--all-files", check=False)
     assert result.returncode == 0, result.stdout + result.stderr
     assert (repo / "CHANGELOG.md").read_text() == changelog
     assert git(repo, "rev-list", "--count", "HEAD") == "2"
@@ -504,13 +504,13 @@ def test_changelog_hook_preserves_release_and_tag_retry(release_repo: Path) -> N
     assert "finalized release entry" in changelog.casefold()
     assert "Unreleased" not in changelog
     # Manual pre-commit during recovery must preserve the untagged release section.
-    command(repo, sys.executable, "-m", "pre_commit", "run", "--all-files")
+    command(repo, "prek", "run", "--all-files")
     assert (repo / "CHANGELOG.md").read_text() == changelog
     hook.unlink()
     result = retry(repo)
     assert result.returncode == 0, result.stderr
     assert git(repo, "rev-parse", "v0.5.4^{commit}") == head
-    result = command(repo, sys.executable, "-m", "pre_commit", "run", "--all-files", check=False)
+    result = command(repo, "prek", "run", "--all-files", check=False)
     assert result.returncode == 0, result.stdout + result.stderr
     assert (repo / "CHANGELOG.md").read_text() == changelog
 
