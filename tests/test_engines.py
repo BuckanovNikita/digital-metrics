@@ -72,9 +72,7 @@ def test_native_engine_matches_evaluation_metrics(
 ) -> None:
     """The engine run reproduces what Evaluation reports end-to-end."""
     gt_df, preds_df = tiny_dataset
-    ev = Evaluation(
-        preds_df, gt_df, iou_threshold=0.5, matching_strategy="greedy", ap_method="interp"
-    )
+    ev = Evaluation(preds_df, gt_df, iou_threshold=0.5, matching_strategy="greedy", ap_method="interp")
     ev(split="all", find_best_confs=True)
 
     result = _native_engine(["class_a", "class_b", "class_c"]).run(_inputs(gt_df, preds_df))

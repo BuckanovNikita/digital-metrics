@@ -37,9 +37,7 @@ def main() -> None:
     figure_path = ROOT / "docs/prf1_operating_points.svg"
     fig.savefig(figure_path)
     # Matplotlib emits trailing spaces in SVG path data; normalize the checked-in example.
-    figure_path.write_text(
-        "\n".join(line.rstrip() for line in figure_path.read_text().splitlines()) + "\n"
-    )
+    figure_path.write_text("\n".join(line.rstrip() for line in figure_path.read_text().splitlines()) + "\n")
     plt.close(fig)
 
 

@@ -61,9 +61,7 @@ def run_ours(preds_df: pd.DataFrame, gt_df: pd.DataFrame) -> None:
     ev(split=SPLIT, find_best_confs=True)
 
 
-def run_external(
-    backend: Backend, test_gt: pd.DataFrame, test_preds: pd.DataFrame, classes: list[str]
-) -> None:
+def run_external(backend: Backend, test_gt: pd.DataFrame, test_preds: pd.DataFrame, classes: list[str]) -> None:
     """One full external-backend scoring pass."""
     compute_detection_metrics(test_gt, test_preds, backend=backend, classes=classes)
 

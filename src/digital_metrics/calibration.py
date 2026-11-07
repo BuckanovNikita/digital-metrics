@@ -84,8 +84,7 @@ class ConfidenceCalibrator:
         if cal_gt.empty:
             available = split_df["split"].unique().tolist()
             raise ValueError(
-                f"No ground-truth rows found for calibration split {calibration_split!r}. "
-                f"Available splits: {available}"
+                f"No ground-truth rows found for calibration split {calibration_split!r}. Available splits: {available}"
             )
 
         overlap = set(cal_gt["image_name"]) & set(eval_gt["image_name"])
@@ -127,10 +126,7 @@ class ConfidenceCalibrator:
         """
         cal_gt = self.validate_calibration_gt(split_df, calibration_split, eval_gt)
         cal_image_names = cal_gt["image_name"].unique().tolist()
-        logger.info(
-            f"Calibrating confidence thresholds on '{calibration_split}' split "
-            f"({len(cal_gt)} GT rows)..."
-        )
+        logger.info(f"Calibrating confidence thresholds on '{calibration_split}' split ({len(cal_gt)} GT rows)...")
         cal_matches = match_boxes(
             cal_gt,
             preds_df,

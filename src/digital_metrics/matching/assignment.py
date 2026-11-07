@@ -119,8 +119,4 @@ def assign_hungarian(
     max_pairs = min(n_preds, n_gts)
     score = np.where(valid, float(max_pairs + 1) + iou_matrix, 0.0)
     row_ind, col_ind = linear_sum_assignment(-score)
-    return [
-        (int(i), int(j))
-        for i, j in zip(row_ind.tolist(), col_ind.tolist(), strict=True)
-        if valid[i, j]
-    ]
+    return [(int(i), int(j)) for i, j in zip(row_ind.tolist(), col_ind.tolist(), strict=True) if valid[i, j]]

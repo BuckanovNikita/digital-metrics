@@ -162,9 +162,7 @@ def test_coco_actual_events(case: str) -> None:
     events = [e for e in evaluator.evalImgs if e is not None and e["aRng"] == [0, 1e10]]
     tp = sum(int((e["dtMatches"][0] > 0).sum()) for e in events)
     count = sum(len(e["dtIds"]) for e in events)
-    assert raw_counts(original_gt, original_preds, ["cat"], list(images), 0.5, "torchmetrics")[
-        "cat"
-    ] == (
+    assert raw_counts(original_gt, original_preds, ["cat"], list(images), 0.5, "torchmetrics")["cat"] == (
         tp,
         count - tp,
         len(gt) - tp,
@@ -174,13 +172,9 @@ def test_coco_actual_events(case: str) -> None:
 def test_calibration_preserves_empty_image_scope_and_ties() -> None:
     gt, preds = dataset("empty_fp")
     preds.loc[1, "confidence"] = 0.9
-    threshold = calibrate_raw(
-        gt, preds, ["cat"], ["positive", "negative"], "global", "torchmetrics"
-    )
+    threshold = calibrate_raw(gt, preds, ["cat"], ["positive", "negative"], "global", "torchmetrics")
     assert threshold == 0.5
-    assert raw_counts(gt, preds, ["cat"], ["positive", "negative"], threshold, "torchmetrics")[
-        "cat"
-    ] == (1, 1, 0)
+    assert raw_counts(gt, preds, ["cat"], ["positive", "negative"], threshold, "torchmetrics")["cat"] == (1, 1, 0)
 
 
 def mixed_class_ties() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -231,10 +225,8 @@ def validator_counts(
     return {
         name: (
             int(correct[preds.instance_label.to_numpy() == name].sum()),
-            int((preds.instance_label == name).sum())
-            - int(correct[preds.instance_label.to_numpy() == name].sum()),
-            int((gt.instance_label == name).sum())
-            - int(correct[preds.instance_label.to_numpy() == name].sum()),
+            int((preds.instance_label == name).sum()) - int(correct[preds.instance_label.to_numpy() == name].sum()),
+            int((gt.instance_label == name).sum()) - int(correct[preds.instance_label.to_numpy() == name].sum()),
         )
         for name in ["0", "1"]
     }
@@ -277,19 +269,17 @@ def test_mixed_class_calibration_matches_whole_image_validator(mode: str, *, rev
         assert calibrated == global_threshold
     else:
         assert isinstance(calibrated, dict)
-        assert raw_counts(
-            gt, preds, ["0", "1"], None, calibrated, "ultralytics"
-        ) == validator_counts(gt, preds, calibrated)
-    assert raw_counts(
-        gt, preds, ["0", "1"], None, {"0": 0.8, "1": 0.7}, "ultralytics"
-    ) == validator_counts(gt, preds, {"0": 0.8, "1": 0.7})
+        assert raw_counts(gt, preds, ["0", "1"], None, calibrated, "ultralytics") == validator_counts(
+            gt, preds, calibrated
+        )
+    assert raw_counts(gt, preds, ["0", "1"], None, {"0": 0.8, "1": 0.7}, "ultralytics") == validator_counts(
+        gt, preds, {"0": 0.8, "1": 0.7}
+    )
 
 
 @pytest.mark.parametrize("reverse", [False, True])
 @pytest.mark.parametrize("classes", [["0", "1"], ["1", "0"]])
-def test_ultralytics_per_class_calibration_uses_realized_dictionary(
-    classes: list[str], *, reverse: bool
-) -> None:
+def test_ultralytics_per_class_calibration_uses_realized_dictionary(classes: list[str], *, reverse: bool) -> None:
     from fractions import Fraction
 
     pytest.importorskip("ultralytics")
@@ -302,25 +292,18 @@ def test_ultralytics_per_class_calibration_uses_realized_dictionary(
 
     def objective(values: dict[str, float]) -> Fraction:
         return sum(
-            (
-                Fraction(2 * tp, 2 * tp + fp + fn)
-                for tp, fp, fn in validator_counts(gt, preds, values).values()
-            ),
+            (Fraction(2 * tp, 2 * tp + fp + fn) for tp, fp, fn in validator_counts(gt, preds, values).values()),
             Fraction(0),
         )
 
     actual = objective(thresholds)
     assert actual >= objective({"0": 0.9, "1": 0.9})
     for name in ["0", "1"]:
-        candidates = set(preds.loc[preds.instance_label == name, "confidence"]) | {
-            float(preds.confidence.max())
-        }
+        candidates = set(preds.loc[preds.instance_label == name, "confidence"]) | {float(preds.confidence.max())}
         for threshold in candidates:
             proposal = thresholds | {name: threshold}
             proposed = objective(proposal)
             assert proposed <= actual
             if proposed == actual:
                 assert threshold <= thresholds[name]
-    assert raw_counts(gt, preds, classes, None, thresholds, "ultralytics") == validator_counts(
-        gt, preds, thresholds
-    )
+    assert raw_counts(gt, preds, classes, None, thresholds, "ultralytics") == validator_counts(gt, preds, thresholds)

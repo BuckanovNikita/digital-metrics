@@ -85,8 +85,7 @@ def transliterate(text: str, scheme: str = DEFAULT_SCHEME) -> str:
         table = TRANSLIT_SCHEMES[scheme]
     except KeyError:
         raise ValueError(
-            f"Unknown transliteration scheme {scheme!r}; expected one of "
-            f"{sorted(TRANSLIT_SCHEMES)}."
+            f"Unknown transliteration scheme {scheme!r}; expected one of {sorted(TRANSLIT_SCHEMES)}."
         ) from None
 
     out: list[str] = []
@@ -137,9 +136,7 @@ def _build_translit_index(gt_labels: Iterable[str]) -> tuple[dict[str, str], set
         # conversion, so index the folded spelling as well.
         spellings = {label, label.replace("ё", "е").replace("Ё", "Е")}
         keys = {normalize_label(label)} | {
-            normalize_label(transliterate(spelling, scheme))
-            for spelling in spellings
-            for scheme in TRANSLIT_SCHEMES
+            normalize_label(transliterate(spelling, scheme)) for spelling in spellings for scheme in TRANSLIT_SCHEMES
         }
         for key in keys:
             if not key or key in ambiguous:

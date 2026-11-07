@@ -80,9 +80,7 @@ def test_backend_scores_empty_image_rows(
         pytest.skip(f"optional backend {module!r} not installed")
 
     gt_df, preds_df = tiny_dataset
-    empty_image = pd.DataFrame(
-        [("img3", None, None, None, None, None, "test")], columns=gt_df.columns
-    )
+    empty_image = pd.DataFrame([("img3", None, None, None, None, None, "test")], columns=gt_df.columns)
     gt_df = pd.concat([gt_df, empty_image], ignore_index=True)
     result = compute_detection_metrics(gt_df, preds_df, backend=backend)  # type: ignore[arg-type]
 

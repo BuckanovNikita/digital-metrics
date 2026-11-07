@@ -64,10 +64,7 @@ def main() -> None:
     for cls, m in sorted(ev.metrics.items()):
         ap50 = m.ap50
         ap5095 = m.ap50_95
-        print(
-            f"{cls:<30} {m.precision:>7.4f} {m.recall:>7.4f} {m.f1_score:>7.4f} "
-            f"{ap50:>7.4f} {ap5095:>8.4f}"
-        )
+        print(f"{cls:<30} {m.precision:>7.4f} {m.recall:>7.4f} {m.f1_score:>7.4f} {ap50:>7.4f} {ap5095:>8.4f}")
         if not (
             np.isclose(m.precision, 1.0)
             and np.isclose(m.recall, 1.0)
@@ -92,9 +89,7 @@ def main() -> None:
     total_tp = sum(m.tp for m in ev.metrics.values())
     total_fp = sum(m.fp for m in ev.metrics.values())
     total_fn = sum(m.fn for m in ev.metrics.values())
-    print(
-        f"totals:  TP={total_tp:.0f}  FP={total_fp:.0f}  FN={total_fn:.0f}  (GT rows={len(gt_df)})"
-    )
+    print(f"totals:  TP={total_tp:.0f}  FP={total_fp:.0f}  FN={total_fn:.0f}  (GT rows={len(gt_df)})")
 
     if imperfect:
         print(f"\n[FAIL] {len(imperfect)} class(es) did not score a perfect 1.0:")

@@ -45,9 +45,7 @@ def test_fixed_population_and_authoritative_observations(tiny_dataset, strategy,
         matching_strategy=strategy,
         ap_method=method,
     )
-    matches = match_boxes(
-        truth, prepared, 0.5, strategy=strategy, split_image_names=["img1", "img2"]
-    )
+    matches = match_boxes(truth, prepared, 0.5, strategy=strategy, split_image_names=["img1", "img2"])
     sliced = slice_by_conf(matches, classes, thresholds)
     old_metrics = compute_metrics_from_matches(sliced, classes, thresholds)
     compute_map(truth, raw, old_metrics, ["img1", "img2"], method=method, strategy=strategy)
@@ -59,9 +57,9 @@ def test_fixed_population_and_authoritative_observations(tiny_dataset, strategy,
         curve = next(c for c in result.pr_curves if c.class_name == name)
         if curve.gt_count:
             assert curve.ap50 == result.metrics[name].ap50
-            assert compute_ap(
-                np.asarray(curve.recall), np.asarray(curve.precision), method
-            ) == pytest.approx(curve.ap50)
+            assert compute_ap(np.asarray(curve.recall), np.asarray(curve.precision), method) == pytest.approx(
+                curve.ap50
+            )
         else:
             assert curve.ap50 is None and curve.recall == []
     assert result.matches == sliced and result.unfiltered_matches == matches
@@ -99,9 +97,7 @@ def test_empty_image_false_positive_and_absent_class(tiny_dataset) -> None:
 def test_pr_scope_and_ties_are_compute_map_scope(tiny_dataset) -> None:
     truth, preds = tiny_dataset
     preds["confidence"] = 0.8
-    curves = build_pr_observations(
-        truth, preds, classes=["class_a", "class_c", "absent"], image_names=["img1"]
-    )
+    curves = build_pr_observations(truth, preds, classes=["class_a", "class_c", "absent"], image_names=["img1"])
     assert curves[0].gt_count == 1 and curves[1].gt_count == 1
     assert curves[0].confidence == [0.8, 0.8]
     assert curves[0].tp == [1, 1] and curves[0].fp == [0, 1]
@@ -156,15 +152,11 @@ def test_paired_none_is_one_pair_and_intervals_are_not_hypotheses() -> None:
 
 def test_explicit_family_order_and_pooled_restriction() -> None:
     gt, preds, new_gt, new_preds = _paired_statuses()
-    result = compare_paired(
-        gt, preds, new_gt, new_preds, ["a", "b", "c"], classes=["x"], iterations=100, seed=42
-    )
+    result = compare_paired(gt, preds, new_gt, new_preds, ["a", "b", "c"], classes=["x"], iterations=100, seed=42)
     pair = result.by_class["x"]
     assert pair.precision.delta == 0.5 and pair.recall.delta == 0.5
     assert result.pooled.precision == pair.precision
-    assert result.adjusted == adjust_benjamini_hochberg(
-        [pair.precision.p_value, pair.recall.p_value]
-    )
+    assert result.adjusted == adjust_benjamini_hochberg([pair.precision.p_value, pair.recall.p_value])
     assert len(result.adjusted.adjusted_p_values) == 2
     empty = compare_paired(gt, preds, new_gt, new_preds, [], classes=[])
     assert np.isnan(empty.pooled.precision.delta)
@@ -172,9 +164,7 @@ def test_explicit_family_order_and_pooled_restriction() -> None:
 
 def test_statistical_frozen_arithmetic_and_failures() -> None:
     gt, preds, new_gt, new_preds = _paired_statuses()
-    pair = compare_paired(
-        gt, preds, new_gt, new_preds, ["a", "b", "c"], iterations=100, seed=42
-    ).pooled
+    pair = compare_paired(gt, preds, new_gt, new_preds, ["a", "b", "c"], iterations=100, seed=42).pooled
     assert pair.precision.delta == 0
     assert pair.precision.p_value == 1
     assert pair.precision.ci_lower == -2 / 3 and pair.precision.ci_upper == 0.4
@@ -229,9 +219,7 @@ def test_explicit_rendering_single_save_caption_and_frames(tiny_dataset, tmp_pat
 
     with Image.open(explicit["precision"]) as image:
         assert image.info["Model identity"] == caption
-    legacy, legacy_dtrk = get_dashboards(
-        metrics, truth, None, [], "old", path=str(tmp_path / "old")
-    )
+    legacy, legacy_dtrk = get_dashboards(metrics, truth, None, [], "old", path=str(tmp_path / "old"))
     pd.testing.assert_frame_equal(result.dashboard, legacy)
     pd.testing.assert_frame_equal(result.dtrk_dashboard, legacy_dtrk)
 

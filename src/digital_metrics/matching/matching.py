@@ -34,9 +34,7 @@ def _resolve_matching_scope(
     """
     if split_image_names is not None:
         scoped_preds = preds_df[preds_df["image_name"].isin(split_image_names)]
-        all_images: list[str] | npt.NDArray[np.str_] = list(
-            set(split_image_names) | set(gt_df["image_name"].unique())
-        )
+        all_images: list[str] | npt.NDArray[np.str_] = list(set(split_image_names) | set(gt_df["image_name"].unique()))
         return scoped_preds, all_images
     return preds_df, gt_df["image_name"].unique()
 
@@ -69,9 +67,7 @@ def match_boxes(
     validate_option("matching_strategy", strategy, ("greedy", "iou_prior", "hungarian"))
     validate_dataframes(preds_df, gt_df)
     if split_image_names is not None:
-        gt_df, preds_df, scope = normalize_image_ids(
-            gt_df, preds_df, pd.DataFrame({"image_name": split_image_names})
-        )
+        gt_df, preds_df, scope = normalize_image_ids(gt_df, preds_df, pd.DataFrame({"image_name": split_image_names}))
         split_image_names = scope["image_name"].tolist()
     else:
         gt_df, preds_df = normalize_image_ids(gt_df, preds_df)

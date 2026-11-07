@@ -28,6 +28,5 @@ def image_row_indices(df: pd.DataFrame) -> dict[str, npt.NDArray[np.intp]]:
     per-group DataFrame construction.
     """
     return {
-        str(name): np.asarray(idx, dtype=np.intp)
-        for name, idx in df.groupby("image_name", sort=False).indices.items()
+        str(name): np.asarray(idx, dtype=np.intp) for name, idx in df.groupby("image_name", sort=False).indices.items()
     }

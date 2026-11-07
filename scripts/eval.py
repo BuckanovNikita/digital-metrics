@@ -104,10 +104,7 @@ def main() -> None:
     print("=" * 72)
     for cls, m in sorted(ev.metrics.items()):
         ap50_str = f"{m.ap50:.4f}" if not np.isnan(m.ap50) else "  nan "
-        print(
-            f"{cls:<30} {m.precision:>7.4f} {m.recall:>7.4f} "
-            f"{m.f1_score:>7.4f} {ap50_str:>7} {m.confidence:>7.4f}"
-        )
+        print(f"{cls:<30} {m.precision:>7.4f} {m.recall:>7.4f} {m.f1_score:>7.4f} {ap50_str:>7} {m.confidence:>7.4f}")
     print("=" * 72)
 
     valid_ap50 = [m.ap50 for m in ev.metrics.values() if not np.isnan(m.ap50)]

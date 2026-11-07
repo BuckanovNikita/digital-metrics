@@ -72,9 +72,7 @@ def release_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     # Use the real post-commit hook definition, substituting only the already-installed
     # interpreter so fixture projects need no environment installation or network.
     config = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
-    release_hook = next(
-        hook for item in config["repos"] for hook in item["hooks"] if hook["id"] == "local-release"
-    )
+    release_hook = next(hook for item in config["repos"] for hook in item["hooks"] if hook["id"] == "local-release")
     release_hook["entry"] = f'{sys.executable} "{HELPER}"'
     config["repos"] = [
         {
@@ -117,9 +115,7 @@ def release_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         ("fix: replace interface\n\nBREAKING CHANGE: old interface removed", "0.6.0"),
     ],
 )
-def test_commit_updates_metadata_and_tags_once(
-    release_repo: Path, message: str, version: str
-) -> None:
+def test_commit_updates_metadata_and_tags_once(release_repo: Path, message: str, version: str) -> None:
     repo = release_repo
     commit(repo, message)
     assert git(repo, "log", "-1", "--format=%s") == f"chore(release): {version}"
@@ -332,9 +328,7 @@ def test_lock_is_shared_across_worktrees(release_repo: Path, tmp_path: Path) -> 
     assert lock.exists()
 
 
-def test_lock_refresh_cannot_upgrade_dependencies(
-    release_repo: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_lock_refresh_cannot_upgrade_dependencies(release_repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.syspath_prepend(str(ROOT))
     from scripts import local_release
 
@@ -459,9 +453,7 @@ def test_unreachable_tag_conflict_does_not_stamp_metadata(release_repo: Path) ->
 
 def install_changelog_hook(repo: Path) -> None:
     config = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
-    hook = next(
-        hook for item in config["repos"] for hook in item["hooks"] if hook["id"] == "changelog"
-    )
+    hook = next(hook for item in config["repos"] for hook in item["hooks"] if hook["id"] == "changelog")
     hook["entry"] = f'{sys.executable} "{HELPER}" --changelog'
     path = repo / ".pre-commit-config.yaml"
     fixture_config = yaml.safe_load(path.read_text())

@@ -194,9 +194,7 @@ def _compute_map_with_observations(
     validate_option("matching_strategy", strategy, ("greedy", "iou_prior", "hungarian"))
     validate_dataframes(preds_df, gt_df)
     if split_image_names is not None:
-        gt_df, preds_df, scope = normalize_image_ids(
-            gt_df, preds_df, pd.DataFrame({"image_name": split_image_names})
-        )
+        gt_df, preds_df, scope = normalize_image_ids(gt_df, preds_df, pd.DataFrame({"image_name": split_image_names}))
         split_image_names = scope["image_name"].tolist()
     else:
         gt_df, preds_df = normalize_image_ids(gt_df, preds_df)
@@ -211,9 +209,7 @@ def _compute_map_with_observations(
     classes = sorted(classes_in_split)
     npos_by_class = gt_df.groupby("instance_label").size().to_dict()
 
-    ap_per_class: dict[str, dict[float, float]] = {
-        c: {t: float("nan") for t in _IOU_THRESHOLDS} for c in classes
-    }
+    ap_per_class: dict[str, dict[float, float]] = {c: {t: float("nan") for t in _IOU_THRESHOLDS} for c in classes}
 
     observations: list[PRObservation] = []
     for c in classes:
@@ -225,8 +221,7 @@ def _compute_map_with_observations(
         # dominant cost here when a class spans tens of thousands of images.
         gt_boxes_c = gt_c[[x1, y1, x2, y2]].to_numpy(np.float32)
         gt_by_img: _GtByImg = {
-            str(img_id): gt_boxes_c[idx]
-            for img_id, idx in gt_c.groupby("image_name").indices.items()
+            str(img_id): gt_boxes_c[idx] for img_id, idx in gt_c.groupby("image_name").indices.items()
         }
 
         npos = npos_by_class.get(c, 0)
@@ -313,9 +308,7 @@ def build_pr_observations(
     validate_option("ap_method", ap_method, ("interp", "continuous"))
     validate_option("matching_strategy", matching_strategy, ("greedy", "iou_prior", "hungarian"))
     validate_dataframes(preds_df, gt_df)
-    truth, predictions, scope = normalize_image_ids(
-        gt_df, preds_df, pd.DataFrame({"image_name": image_names})
-    )
+    truth, predictions, scope = normalize_image_ids(gt_df, preds_df, pd.DataFrame({"image_name": image_names}))
     truth = truth[truth["image_name"].isin(scope["image_name"])]
     observations = _compute_map_with_observations(
         truth, predictions, {}, scope["image_name"].tolist(), ap_method, matching_strategy
@@ -327,7 +320,4 @@ def _ordered_observations(
     observations: list[PRObservation], classes: list[str], method: APMethod
 ) -> list[PRObservation]:
     by_class = {observation.class_name: observation for observation in observations}
-    return [
-        by_class.get(name, PRObservation(name, [], [], [], [], [], 0, None, method))
-        for name in classes
-    ]
+    return [by_class.get(name, PRObservation(name, [], [], [], [], [], 0, None, method)) for name in classes]

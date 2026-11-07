@@ -59,11 +59,7 @@ def compute_detection_metrics(
         ImportError: If the selected backend's optional dependency is missing.
     """
     if backend == "ultralytics":
-        return compute_ultralytics_metrics(
-            gt_df, preds_df, classes=classes, split_image_names=split_image_names
-        )
+        return compute_ultralytics_metrics(gt_df, preds_df, classes=classes, split_image_names=split_image_names)
     if backend == "torchmetrics":
-        return compute_torchmetrics_metrics(
-            gt_df, preds_df, classes=classes, split_image_names=split_image_names
-        )
+        return compute_torchmetrics_metrics(gt_df, preds_df, classes=classes, split_image_names=split_image_names)
     raise ValueError(f"Unknown backend {backend!r}; expected one of {list(get_args(Backend))}.")

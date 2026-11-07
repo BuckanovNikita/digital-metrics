@@ -121,9 +121,7 @@ def _read_prf1_at_conf(
     return p, r, f1
 
 
-def _conf_at_max_f1(
-    prec_curve: npt.NDArray[np.float64], score_curve: npt.NDArray[np.float64]
-) -> float:
+def _conf_at_max_f1(prec_curve: npt.NDArray[np.float64], score_curve: npt.NDArray[np.float64]) -> float:
     """Confidence at the max-F1 point of one class's IoU-0.50 curve (calibration).
 
     Mirrors :func:`_prf1_at_iou50`'s max-F1 recall index, then returns the score
@@ -245,9 +243,7 @@ def _torchmetrics_eval(
                 }
             )
         else:
-            preds_list.append(
-                {"boxes": empty_boxes, "scores": empty_labels.float(), "labels": empty_labels}
-            )
+            preds_list.append({"boxes": empty_boxes, "scores": empty_labels.float(), "labels": empty_labels})
 
     if not gt_class_idxs:
         return {}
@@ -266,9 +262,7 @@ def _torchmetrics_eval(
     # the same shape and holds the confidence threshold at each recall point.
     precision: npt.NDArray[np.float64] = result["precision"].cpu().numpy()
     scores_t = result.get("scores")
-    scores: npt.NDArray[np.float64] | None = (
-        scores_t.cpu().numpy() if scores_t is not None else None
-    )
+    scores: npt.NDArray[np.float64] | None = scores_t.cpu().numpy() if scores_t is not None else None
     # With a single class present, ``result["classes"]`` is a 0-d tensor whose
     # .tolist() is a bare int; atleast_1d keeps the comprehension iterable.
     res_classes = [int(c) for c in np.atleast_1d(result["classes"].cpu().numpy()).tolist()]
@@ -278,9 +272,7 @@ def _torchmetrics_eval(
         if cls_idx not in gt_class_idxs:
             continue
         cls_prec = precision[:, :, k, _AREA_ALL, _MAXDET_100]  # (T iou, R recall)
-        cls_scores50 = (
-            scores[_IOU50_IDX, :, k, _AREA_ALL, _MAXDET_100] if scores is not None else None
-        )
+        cls_scores50 = scores[_IOU50_IDX, :, k, _AREA_ALL, _MAXDET_100] if scores is not None else None
         out[idx_to_class[cls_idx]] = (cls_prec, cls_scores50)
     return out
 
@@ -332,9 +324,7 @@ def compute_torchmetrics_metrics(
     )
     out: dict[str, DetectionMetrics] = {}
     for name, (cls_prec, _) in per_class.items():
-        p_val, r_val, f1_val = (
-            operating[name] if conf_threshold is not None else _prf1_at_iou50(cls_prec[_IOU50_IDX])
-        )
+        p_val, r_val, f1_val = operating[name] if conf_threshold is not None else _prf1_at_iou50(cls_prec[_IOU50_IDX])
         out[name] = DetectionMetrics(
             tp=counts[name][0] if name in counts else None,
             fp=counts[name][1] if name in counts else None,
@@ -346,9 +336,7 @@ def compute_torchmetrics_metrics(
             ap75=_ap(cls_prec[_IOU75_IDX]),
             ap50_95=float(np.mean([_ap(row) for row in cls_prec])),
         )
-    return complete_counts(
-        out, gt_df, preds_df, classes, split_image_names, conf_threshold, "torchmetrics"
-    )
+    return complete_counts(out, gt_df, preds_df, classes, split_image_names, conf_threshold, "torchmetrics")
 
 
 def find_torchmetrics_confidence(

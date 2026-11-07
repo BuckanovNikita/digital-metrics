@@ -44,9 +44,7 @@ BOX = ["bbox_x_tl", "bbox_y_tl", "bbox_x_br", "bbox_y_br"]
 IOUV = torch.linspace(0.5, 0.95, 10)  # 10 IoU thresholds, exactly as YOLO val
 
 
-def match_predictions(
-    pred_classes: torch.Tensor, true_classes: torch.Tensor, iou: torch.Tensor
-) -> np.ndarray:
+def match_predictions(pred_classes: torch.Tensor, true_classes: torch.Tensor, iou: torch.Tensor) -> np.ndarray:
     """Copy of ``BaseValidator.match_predictions`` (non-scipy path, v8.4.70).
 
     ``iou`` is the (n_gt, n_pred) IoU matrix. Returns an (n_pred, 10) bool array
@@ -68,9 +66,7 @@ def match_predictions(
     return correct
 
 
-def ultralytics_ap(
-    gt_df: pd.DataFrame, preds_df: pd.DataFrame, class_to_idx: dict[str, int]
-) -> dict[int, np.ndarray]:
+def ultralytics_ap(gt_df: pd.DataFrame, preds_df: pd.DataFrame, class_to_idx: dict[str, int]) -> dict[int, np.ndarray]:
     """Run Ultralytics' own matching + ap_per_class over the box set.
 
     Returns ``{class_idx: ap_row}`` where each ``ap_row`` is the length-10 AP
@@ -125,8 +121,7 @@ def main() -> None:
     test_images = set(test_gt["image_name"].unique())
     test_preds = preds_df[preds_df["image_name"].isin(test_images)]
     logger.info(
-        f"test: {test_gt['image_name'].nunique()} images, "
-        f"{len(test_gt)} GT boxes, {len(test_preds)} predictions"
+        f"test: {test_gt['image_name'].nunique()} images, {len(test_gt)} GT boxes, {len(test_preds)} predictions"
     )
 
     # Stable class vocabulary shared by both sides.
@@ -175,14 +170,10 @@ def main() -> None:
 
     diffs = np.array([r["diff"] for r in rows])
     print(f"\nclasses compared: {len(rows)}")
-    print(
-        f"per-class AP50  max|diff|={np.abs(diffs).max():.5f}  "
-        f"mean|diff|={np.abs(diffs).mean():.5f}"
-    )
+    print(f"per-class AP50  max|diff|={np.abs(diffs).max():.5f}  mean|diff|={np.abs(diffs).mean():.5f}")
 
     print(
-        f"\nmAP50      ours={np.mean(list(ours_ap50.values())):.4f}  "
-        f"ultralytics={np.mean(list(ult_ap50.values())):.4f}"
+        f"\nmAP50      ours={np.mean(list(ours_ap50.values())):.4f}  ultralytics={np.mean(list(ult_ap50.values())):.4f}"
     )
     print(
         f"mAP50-95   ours={np.mean(list(ours_ap5095.values())):.4f}  "

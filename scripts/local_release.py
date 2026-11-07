@@ -100,9 +100,7 @@ def install_hooks(root: Path) -> None:
         raise ReleaseError("prek is unavailable; sync the project development environment first.")
     run(root, prek, "install", "--hook-type", "pre-commit")
     launcher = (
-        f"#!/usr/bin/env bash\n{HOOK_MARKER}\n"
-        f"exec {shlex.quote(prek)} run "
-        "--hook-stage post-commit --all-files\n"
+        f"#!/usr/bin/env bash\n{HOOK_MARKER}\nexec {shlex.quote(prek)} run --hook-stage post-commit --all-files\n"
     )
     with tempfile.NamedTemporaryFile(mode="w", dir=hook.parent, delete=False) as stream:
         temporary = Path(stream.name)
@@ -173,19 +171,14 @@ def validate_release_commit(root: Path, attempt: Attempt) -> None:
         raise ReleaseError(f"Expected release commit subject: {attempt.subject}")
     paths = git(root, "diff", "--name-only", attempt.source, "HEAD").splitlines()
     if set(paths) != set(RELEASE_FILES):
-        raise ReleaseError(
-            "Release commit must change only pyproject.toml, uv.lock and CHANGELOG.md."
-        )
+        raise ReleaseError("Release commit must change only pyproject.toml, uv.lock and CHANGELOG.md.")
     require_clean(root)
     validate_metadata(root, attempt)
     if (
         attempt.changelog_sha256 is None
-        or hashlib.sha256((root / "CHANGELOG.md").read_bytes()).hexdigest()
-        != attempt.changelog_sha256
+        or hashlib.sha256((root / "CHANGELOG.md").read_bytes()).hexdigest() != attempt.changelog_sha256
     ):
-        raise ReleaseError(
-            "Changelog does not match the prepared release; inspect recovery metadata."
-        )
+        raise ReleaseError("Changelog does not match the prepared release; inspect recovery metadata.")
 
 
 def tag_exists(root: Path, tag: str) -> bool:
@@ -291,9 +284,7 @@ def prepare_commit(root: Path, attempt: Attempt) -> Attempt:
     if set(paths) != set(RELEASE_FILES) or git(root, "rev-parse", "HEAD") != attempt.source:
         raise ReleaseError("Source commit or files changed during release preparation.")
     attempt = attempt.model_copy(
-        update={
-            "changelog_sha256": hashlib.sha256((root / "CHANGELOG.md").read_bytes()).hexdigest()
-        }
+        update={"changelog_sha256": hashlib.sha256((root / "CHANGELOG.md").read_bytes()).hexdigest()}
     )
     git_path(root, "digital-metrics-release.json").write_text(attempt.model_dump_json() + "\n")
     git(root, "add", "--", *RELEASE_FILES)
@@ -339,9 +330,7 @@ def main() -> int:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--install-hooks", action="store_true", help="install both local Git hooks")
     mode.add_argument("--post-commit", action="store_true", help="invoked automatically by Git")
-    mode.add_argument(
-        "--changelog", action="store_true", help="refresh committed changelog history"
-    )
+    mode.add_argument("--changelog", action="store_true", help="refresh committed changelog history")
     args = parser.parse_args()
     if os.environ.get(GUARD) == "1":
         return 0
@@ -349,9 +338,7 @@ def main() -> int:
         root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel"))
         if args.changelog:
             if refresh_changelog(root):
-                logger.info(
-                    "Changelog updated. Review and stage CHANGELOG.md, then retry the commit."
-                )
+                logger.info("Changelog updated. Review and stage CHANGELOG.md, then retry the commit.")
                 return 1
         elif args.install_hooks:
             install_hooks(root)
@@ -362,9 +349,7 @@ def main() -> int:
             else:
                 release(root)
     except (ReleaseError, OSError, ValueError, KeyError, ValidationError) as exc:
-        logger.error(
-            "{}. The original commit is retained. Retry after resolving this: {}", exc, RETRY
-        )
+        logger.error("{}. The original commit is retained. Retry after resolving this: {}", exc, RETRY)
         return 1
     except KeyboardInterrupt:
         logger.error("Release interrupted. The original commit is retained. Retry: {}", RETRY)

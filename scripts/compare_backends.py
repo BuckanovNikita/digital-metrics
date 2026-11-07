@@ -87,9 +87,7 @@ def compute_external(
 ) -> dict[str, Scores]:
     """Score with one external backend via the single entry point."""
     res = compute_detection_metrics(test_gt, test_preds, backend=backend, classes=classes)
-    return {
-        c: Scores(m.precision, m.recall, m.f1, m.ap50, m.ap75, m.ap50_95) for c, m in res.items()
-    }
+    return {c: Scores(m.precision, m.recall, m.f1, m.ap50, m.ap75, m.ap50_95) for c, m in res.items()}
 
 
 def print_summary(ways: dict[str, dict[str, Scores]], shared: list[str]) -> None:
@@ -104,9 +102,7 @@ def print_summary(ways: dict[str, dict[str, Scores]], shared: list[str]) -> None
     print("=" * width)
 
 
-def print_per_class(
-    ways: dict[str, dict[str, Scores]], shared: list[str], attr: str, title: str
-) -> None:
+def print_per_class(ways: dict[str, dict[str, Scores]], shared: list[str], attr: str, title: str) -> None:
     """One metric, per class, one column per way, sorted by spread across ways."""
     names = list(ways)
     width = 20 + 10 * len(names) + 9
@@ -132,8 +128,7 @@ def main() -> None:
     test_preds = preds_df[preds_df["image_name"].isin(test_images)]
     classes = sorted(gt_df["instance_label"].unique())
     logger.info(
-        f"test: {test_gt['image_name'].nunique()} images, "
-        f"{len(test_gt)} GT boxes, {len(test_preds)} predictions"
+        f"test: {test_gt['image_name'].nunique()} images, {len(test_gt)} GT boxes, {len(test_preds)} predictions"
     )
 
     ways: dict[str, dict[str, Scores]] = {}

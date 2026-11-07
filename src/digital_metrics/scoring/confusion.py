@@ -58,20 +58,14 @@ def _get_boxes_to_save(
 
     if pred_index != -1:
         pred_to_save: dict[str, Any] = {
-            str(k): v
-            for k, v in preds_df.loc[[pred_index]]
-            .iloc[0][fields + ["confidence"]]
-            .to_dict()
-            .items()
+            str(k): v for k, v in preds_df.loc[[pred_index]].iloc[0][fields + ["confidence"]].to_dict().items()
         }
         predict_type = "fp" if gt_index != -1 else "bg"
         pred_to_save["type"] = f"predict_{predict_type}"
         res_list.append(pred_to_save)
 
     if gt_index != -1:
-        gt_to_save: dict[str, Any] = {
-            str(k): v for k, v in gt_df.loc[[gt_index]].iloc[0][fields].to_dict().items()
-        }
+        gt_to_save: dict[str, Any] = {str(k): v for k, v in gt_df.loc[[gt_index]].iloc[0][fields].to_dict().items()}
         gt_to_save["type"] = "gt" if pred_index != -1 else "fn"
         gt_to_save["confidence"] = 1
         res_list.append(gt_to_save)
@@ -109,15 +103,11 @@ def get_confusions(
     for match in matches.get(main_class, []):
         classes_with_fn = list(subclasses) + [main_class]
         if match.gt_label in classes_with_fn and match.type in ("FP", "FN"):
-            boxes_to_check.extend(
-                _get_boxes_to_save(preds_df, gt_df, match.gt_index, match.pred_index)
-            )
+            boxes_to_check.extend(_get_boxes_to_save(preds_df, gt_df, match.gt_index, match.pred_index))
 
     for sub in subclasses:
         for match in matches.get(sub, []):
             if match.gt_label == main_class:
-                boxes_to_check.extend(
-                    _get_boxes_to_save(preds_df, gt_df, match.gt_index, match.pred_index)
-                )
+                boxes_to_check.extend(_get_boxes_to_save(preds_df, gt_df, match.gt_index, match.pred_index))
 
     return pd.DataFrame(boxes_to_check)

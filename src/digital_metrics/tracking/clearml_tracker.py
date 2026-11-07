@@ -284,9 +284,7 @@ class ClearMLTracker:
     ) -> None:
         """Report the CI PNGs as images and the confusion matrix as a CM plot."""
         for metric in _CI_PLOT_METRICS if evaluation.metrics else ():
-            plot_path = os.path.join(
-                artifacts_dir, f"{metric}_confidence_intervals_{evaluation.suffix}.png"
-            )
+            plot_path = os.path.join(artifacts_dir, f"{metric}_confidence_intervals_{evaluation.suffix}.png")
             if os.path.exists(plot_path):
                 self._logger.report_image(
                     title="confidence_intervals",

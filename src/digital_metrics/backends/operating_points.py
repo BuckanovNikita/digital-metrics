@@ -28,9 +28,7 @@ def prepare_inputs(
 ) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
     validate_dataframes(preds, gt)
     if images is not None:
-        gt, preds, scope_frame = normalize_image_ids(
-            gt, preds, pd.DataFrame({"image_name": images})
-        )
+        gt, preds, scope_frame = normalize_image_ids(gt, preds, pd.DataFrame({"image_name": images}))
         images = scope_frame["image_name"].tolist()
     else:
         gt, preds = normalize_image_ids(gt, preds)
@@ -42,9 +40,7 @@ def prepare_inputs(
         raise ValueError("'background' is reserved for unmatched detections.")
     unknown = preds.loc[~preds["instance_label"].isin(classes), "instance_label"]
     if not unknown.empty:
-        logger.warning(
-            f"Dropping predictions outside explicit classes: {unknown.value_counts().to_dict()}"
-        )
+        logger.warning(f"Dropping predictions outside explicit classes: {unknown.value_counts().to_dict()}")
     preds = preds[preds["instance_label"].isin(classes) & preds["image_name"].isin(scope)]
     gt = gt[gt["instance_label"].isin(classes) | gt["instance_label"].isna()]
     return gt, preds, classes
@@ -81,9 +77,7 @@ def _prepare_groups(
     """
     keys = ["image_name", "instance_label"] if backend == "torchmetrics" else ["image_name"]
     labels = {name: i for i, name in enumerate(classes)}
-    targets = {
-        key: group for key, group in gt.dropna(subset=["instance_label"]).groupby(keys, sort=False)
-    }
+    targets = {key: group for key, group in gt.dropna(subset=["instance_label"]).groupby(keys, sort=False)}
     groups = []
     empty = gt.iloc[:0]
     for key, group in preds.groupby(keys, sort=False):
@@ -171,10 +165,7 @@ def raw_counts(
     without an imposed COCO cap.
     """
     gt, preds, classes = prepare_inputs(gt, preds, classes, images)
-    thresholds = {
-        name: threshold.get(name, 0.0) if isinstance(threshold, dict) else threshold
-        for name in classes
-    }
+    thresholds = {name: threshold.get(name, 0.0) if isinstance(threshold, dict) else threshold for name in classes}
     if any(not np.isfinite(value) or not 0 <= value <= 1 for value in thresholds.values()):
         raise ValueError("conf_threshold must be finite and in [0, 1].")
     totals = {name: [0, 0] for name in classes}
@@ -183,10 +174,7 @@ def raw_counts(
             totals[name][0] += tp
             totals[name][1] += count
     positives = gt["instance_label"].value_counts()
-    return {
-        name: (tp, count - tp, int(positives.get(name, 0)) - tp)
-        for name, (tp, count) in totals.items()
-    }
+    return {name: (tp, count - tp, int(positives.get(name, 0)) - tp) for name, (tp, count) in totals.items()}
 
 
 def raw_prf1(

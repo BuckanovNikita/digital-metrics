@@ -61,10 +61,7 @@ def test_legacy_artifact_names_save_and_show(tiny_dataset, tmp_path: Path) -> No
         "full_dashboard_observed.xlsx",
         "метрики_дтрк_observed.xlsx",
         "matrix_observed.xlsx",
-        *[
-            f"{m}_confidence_intervals_observed.png"
-            for m in ("recall", "precision", "perebrak", "nedobrak")
-        ],
+        *[f"{m}_confidence_intervals_observed.png" for m in ("recall", "precision", "perebrak", "nedobrak")],
     }
     with patch("digital_metrics.reporting.dashboard.plt.show") as show:
         figure, _ = plot_confidence_intervals(metrics, "precision")

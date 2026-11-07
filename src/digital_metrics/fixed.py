@@ -68,17 +68,9 @@ def evaluate_fixed(
     validate_dataframes(prepared_predictions, gt_df)
     validate_dataframes(ap_predictions, gt_df)
     scope = pd.DataFrame(
-        {
-            "image_name": (
-                gt_df["image_name"].unique().tolist()
-                if split_image_names is None
-                else split_image_names
-            )
-        }
+        {"image_name": (gt_df["image_name"].unique().tolist() if split_image_names is None else split_image_names)}
     )
-    truth, predictions, ap_preds, scope = normalize_image_ids(
-        gt_df, prepared_predictions, ap_predictions, scope
-    )
+    truth, predictions, ap_preds, scope = normalize_image_ids(gt_df, prepared_predictions, ap_predictions, scope)
     image_names = scope["image_name"].tolist()
     truth = truth[truth["image_name"].isin(image_names)]
     unfiltered_matches = match_boxes(
@@ -132,12 +124,7 @@ def _statuses(
     )
     # Prediction identity is its supplied index; keep caller row order. This
     # accepts the legacy library's arbitrary hashable IDs without coercion.
-    surviving = {
-        m.pred_index: m.type == "TP"
-        for records in matches.values()
-        for m in records
-        if m.pred_index != -1
-    }
+    surviving = {m.pred_index: m.type == "TP" for records in matches.values() for m in records if m.pred_index != -1}
     scored_preds = predictions.loc[predictions.index.isin(surviving)]
     pred_status = pd.DataFrame(
         {

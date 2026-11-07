@@ -239,14 +239,10 @@ def compute_ultralytics_metrics(
     Raises:
         ImportError: If the optional ``ultralytics`` dependency is not installed.
     """
-    results, idx_to_class, zero_classes = _ap_per_class_results(
-        gt_df, preds_df, classes, split_image_names
-    )
+    results, idx_to_class, zero_classes = _ap_per_class_results(gt_df, preds_df, classes, split_image_names)
     if results is None:
         if zero_classes is None:
-            return complete_counts(
-                {}, gt_df, preds_df, classes, split_image_names, conf_threshold, "ultralytics"
-            )
+            return complete_counts({}, gt_df, preds_df, classes, split_image_names, conf_threshold, "ultralytics")
         # GT exists but no predictions at all → P/R/F1/AP are zero everywhere.
         empty_results = {
             idx_to_class[int(c)]: DetectionMetrics.model_construct(
@@ -295,9 +291,7 @@ def compute_ultralytics_metrics(
             ap75=float(ap[i, _IOU75_COL]),
             ap50_95=float(ap[i].mean()),
         )
-    return complete_counts(
-        out, gt_df, preds_df, classes, split_image_names, conf_threshold, "ultralytics"
-    )
+    return complete_counts(out, gt_df, preds_df, classes, split_image_names, conf_threshold, "ultralytics")
 
 
 def find_ultralytics_confidence(

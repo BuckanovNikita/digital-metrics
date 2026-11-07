@@ -170,9 +170,7 @@ def test_restore_labels_ignores_non_string_gt_labels() -> None:
 
 def test_evaluation_with_empty_image_gt_rows() -> None:
     gt_df, preds_df = _cyrillic_dataset()
-    empty_image = pd.DataFrame(
-        [("img2", None, None, None, None, None, "test")], columns=gt_df.columns
-    )
+    empty_image = pd.DataFrame([("img2", None, None, None, None, None, "test")], columns=gt_df.columns)
     gt_df = pd.concat([gt_df, empty_image], ignore_index=True)
     evaluation = Evaluation(preds_df, gt_df, iou_threshold=0.5, transliterated_labels=True)
     evaluation("test")

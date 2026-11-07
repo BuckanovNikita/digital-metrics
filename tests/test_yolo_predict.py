@@ -205,9 +205,7 @@ def test_auto_predict_fills_missing_splits_without_repeating_inference(
     )
     calls: list[list[str]] = []
 
-    def fake_predict_on_images(
-        weights: str, image_paths: list[str], **_: object
-    ) -> pd.DataFrame:
+    def fake_predict_on_images(weights: str, image_paths: list[str], **_: object) -> pd.DataFrame:
         calls.append(list(image_paths))
         return pd.DataFrame(
             [
@@ -264,9 +262,7 @@ def test_auto_predict_extends_calibration_union_without_duplicates(
     )
     calls: list[list[str]] = []
 
-    def fake_predict_on_images(
-        weights: str, image_paths: list[str], **_: object
-    ) -> pd.DataFrame:
+    def fake_predict_on_images(weights: str, image_paths: list[str], **_: object) -> pd.DataFrame:
         calls.append(list(image_paths))
         return pd.DataFrame(columns=_PRED_COLUMNS)
 
@@ -302,9 +298,7 @@ def test_predict_kwargs_forwarded_to_model(monkeypatch: pytest.MonkeyPatch) -> N
 
     captured: dict[str, object] = {}
 
-    def fake_predict_on_images(
-        weights: str, image_paths: list[str], **kwargs: object
-    ) -> pd.DataFrame:
+    def fake_predict_on_images(weights: str, image_paths: list[str], **kwargs: object) -> pd.DataFrame:
         captured.update(kwargs)
         return pd.DataFrame(columns=_PRED_COLUMNS)
 

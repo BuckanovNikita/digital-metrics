@@ -58,9 +58,7 @@ class BackendEngine:
 
         best_confidences = {c: 0.0 for c in self._classes}
         if inputs.calibration_split is None:
-            logger.info(
-                f"Computing metrics with the '{self._backend}' backend on split '{inputs.split}'..."
-            )
+            logger.info(f"Computing metrics with the '{self._backend}' backend on split '{inputs.split}'...")
             detection_metrics = compute_detection_metrics(
                 gt_df,
                 raw_preds_df,
@@ -109,23 +107,17 @@ class BackendEngine:
         assert inputs.calibration_split is not None
         gt_df = inputs.gt_df
         raw_preds_df = inputs.raw_preds_df
-        cal_gt = self._calibrator.validate_calibration_gt(
-            inputs.split_df, inputs.calibration_split, gt_df
-        )
+        cal_gt = self._calibrator.validate_calibration_gt(inputs.split_df, inputs.calibration_split, gt_df)
         cal_image_names = cal_gt["image_name"].unique().tolist()
         logger.info(
             f"Calibrating '{self._backend}' confidence on '{inputs.calibration_split}' "
             f"({len(cal_gt)} GT rows, mode={self._confidence_optimization})..."
         )
         find_confidence = (
-            find_ultralytics_confidence
-            if self._backend == "ultralytics"
-            else find_torchmetrics_confidence
+            find_ultralytics_confidence if self._backend == "ultralytics" else find_torchmetrics_confidence
         )
         compute_metrics = (
-            compute_ultralytics_metrics
-            if self._backend == "ultralytics"
-            else compute_torchmetrics_metrics
+            compute_ultralytics_metrics if self._backend == "ultralytics" else compute_torchmetrics_metrics
         )
         conf = find_confidence(
             cal_gt,
@@ -148,9 +140,7 @@ class BackendEngine:
         )
         return detection_metrics, best_confidences
 
-    def _adapt(
-        self, detection_metrics: dict[str, DetectionMetrics], gt_df: pd.DataFrame
-    ) -> dict[str, Metrics]:
+    def _adapt(self, detection_metrics: dict[str, DetectionMetrics], gt_df: pd.DataFrame) -> dict[str, Metrics]:
         """Map external ``DetectionMetrics`` onto native ``Metrics`` for the dashboards.
 
         Explicit thresholds carry observed counts and Wilson intervals.
@@ -176,11 +166,7 @@ class BackendEngine:
                 continue
             tp = dm.tp if dm.tp is not None else dm.recall * n_gt
             fn = dm.fn if dm.fn is not None else n_gt - tp
-            fp = (
-                dm.fp
-                if dm.fp is not None
-                else (tp * (1.0 - dm.precision) / dm.precision if dm.precision > 0 else 0.0)
-            )
+            fp = dm.fp if dm.fp is not None else (tp * (1.0 - dm.precision) / dm.precision if dm.precision > 0 else 0.0)
             result[c] = Metrics(
                 counts_observed=dm.tp is not None and dm.fp is not None and dm.fn is not None,
                 tp=tp,

@@ -33,13 +33,9 @@ class ScoringConfig:
 
     def __post_init__(self) -> None:
         validate_iou(self.iou_threshold)
-        validate_option(
-            "matching_strategy", self.matching_strategy, ("greedy", "iou_prior", "hungarian")
-        )
+        validate_option("matching_strategy", self.matching_strategy, ("greedy", "iou_prior", "hungarian"))
         validate_option("ap_method", self.ap_method, ("interp", "continuous"))
-        validate_option(
-            "confidence_optimization", self.confidence_optimization, ("per_class", "global")
-        )
+        validate_option("confidence_optimization", self.confidence_optimization, ("per_class", "global"))
 
 
 @dataclass

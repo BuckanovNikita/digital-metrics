@@ -180,10 +180,7 @@ def predict_on_images(
     paths = [str(p) for p in image_paths]
     model = YOLO(str(weights))
     names: dict[int, str] = model.names  # class index → name, as the model emits cls
-    logger.info(
-        f"Predicting on {len(paths)} images "
-        f"(conf={conf}, iou={iou}, imgsz={imgsz}, batch={batch})..."
-    )
+    logger.info(f"Predicting on {len(paths)} images (conf={conf}, iou={iou}, imgsz={imgsz}, batch={batch})...")
 
     rows: list[dict[str, Any]] = []
     n_images = 0

@@ -179,10 +179,7 @@ class Evaluation:
                 f"'{inference.weights_path}' when the evaluation runs."
             )
         if self._has_predictions and inference.weights_path is not None:
-            logger.warning(
-                "Both preds_df and weights_path were provided; using preds_df and "
-                "ignoring weights_path."
-            )
+            logger.warning("Both preds_df and weights_path were provided; using preds_df and ignoring weights_path.")
         if preds_df is None:
             # Placeholder until predictions are generated (predict_to_dataframe).
             preds_df = pd.DataFrame(columns=sorted(REQUIRED_COLS_PREDS))
@@ -330,8 +327,7 @@ class Evaluation:
         else:
             if "split" not in self.split_df.columns:
                 raise ValueError(
-                    f"predict_to_dataframe(split={split!r}) requires a 'split' column "
-                    "in split_df, but none was found."
+                    f"predict_to_dataframe(split={split!r}) requires a 'split' column in split_df, but none was found."
                 )
             splits = [split] if isinstance(split, str) else list(split)
             gt = self.split_df[self.split_df["split"].isin(splits)]
@@ -376,9 +372,7 @@ class Evaluation:
         id_by_source: dict[str, str] = {}
         if "image_path" in self.split_df:
             for path in image_paths:
-                values = self.split_df.loc[
-                    self.split_df["image_path"] == path, "image_name"
-                ].unique()
+                values = self.split_df.loc[self.split_df["image_path"] == path, "image_name"].unique()
                 if len(values) != 1:
                     raise ValueError("Each inference image_path must map to one image_name.")
                 key = (
@@ -446,9 +440,7 @@ class Evaluation:
 
     def _define_gt(self, split: str = "all") -> None:
         validate_split(self.split_df, split)
-        self.gt_df = (
-            deepcopy(self.split_df) if split == "all" else self.split_df.query("split == @split")
-        )
+        self.gt_df = deepcopy(self.split_df) if split == "all" else self.split_df.query("split == @split")
 
     def _restore_transliterated_labels(self) -> None:
         """Map transliterated prediction labels back onto the GT vocabulary.
@@ -494,9 +486,7 @@ class Evaluation:
             f"ground-truth vocabulary ({summary}); dropping them — metrics are computed "
             "only for ground-truth classes."
         )
-        self._raw_preds_df = self._raw_preds_df[
-            self._raw_preds_df["instance_label"].isin(known)
-        ].copy()
+        self._raw_preds_df = self._raw_preds_df[self._raw_preds_df["instance_label"].isin(known)].copy()
         self.preds_df = self.preds_df[self.preds_df["instance_label"].isin(known)].copy()
 
     def _splits_to_predict(self, split: str, calibration_split: str | None) -> list[str] | None:
@@ -527,9 +517,7 @@ class Evaluation:
         if self._predicted_image_paths is None:
             return
         if not self._has_predictions and self._weights_path is None:
-            raise ValueError(
-                "Evaluation has no predictions to score; pass preds_df or weights_path."
-            )
+            raise ValueError("Evaluation has no predictions to score; pass preds_df or weights_path.")
         if splits is None:
             gt = self.split_df
         else:
@@ -645,9 +633,7 @@ class Evaluation:
         )
 
     def _get_metrics_as_df(self) -> pd.DataFrame:
-        return pd.DataFrame.from_dict(
-            {k: v.model_dump() for k, v in self.metrics.items()}, orient="index"
-        )
+        return pd.DataFrame.from_dict({k: v.model_dump() for k, v in self.metrics.items()}, orient="index")
 
     def get_dashboards(
         self,
@@ -792,9 +778,7 @@ class Evaluation:
                     gt_type[m.gt_index] = "FN" if (filtered and m.type == "TP") else m.type
 
         gt_df = self.gt_df.copy()
-        preds_df = self.preds_df[
-            self.preds_df["image_name"].isin(self.gt_df["image_name"].unique())
-        ].copy()
+        preds_df = self.preds_df[self.preds_df["image_name"].isin(self.gt_df["image_name"].unique())].copy()
         gt_df["predict_type"] = [gt_type.get(i, "FN") for i in gt_df.index]
         preds_df["predict_type"] = [pred_type.get(i, "FP") for i in preds_df.index]
         return gt_df, preds_df

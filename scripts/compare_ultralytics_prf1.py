@@ -53,8 +53,7 @@ def main() -> None:
     test_images = set(test_gt["image_name"].unique())
     test_preds = preds_df[preds_df["image_name"].isin(test_images)]
     logger.info(
-        f"test: {test_gt['image_name'].nunique()} images, "
-        f"{len(test_gt)} GT boxes, {len(test_preds)} predictions"
+        f"test: {test_gt['image_name'].nunique()} images, {len(test_gt)} GT boxes, {len(test_preds)} predictions"
     )
 
     # Shared class vocabulary so both sides agree on which classes exist.

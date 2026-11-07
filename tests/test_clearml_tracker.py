@@ -114,9 +114,7 @@ def test_log_evaluation_dispatches_all_layers(tiny_dataset, tmp_path) -> None:
     assert "mean_precision" in log.single_values
 
     # Artifacts: dashboards, thresholds, confusion matrix + written Excel files.
-    assert {"dashboard_full", "dashboard_dtrk", "best_confidences", "confusion_matrix"} <= set(
-        task.artifacts
-    )
+    assert {"dashboard_full", "dashboard_dtrk", "best_confidences", "confusion_matrix"} <= set(task.artifacts)
     assert any(name.endswith(".xlsx") for name in task.artifacts)
 
     # Plots: four CI images + one confusion-matrix plot.

@@ -212,9 +212,7 @@ def test_label_preservation_through_filter_and_visualization() -> None:
     preds.index = pd.Index(["known-box"])
     unknown = preds.assign(instance_label="unknown")
     unknown.index = pd.Index(["unknown-box"])
-    ev = Evaluation(
-        pd.concat([preds, unknown]), gt, preprocess=True, preprocess_preds_conf_threshold=0.2
-    )
+    ev = Evaluation(pd.concat([preds, unknown]), gt, preprocess=True, preprocess_preds_conf_threshold=0.2)
     ev(find_best_confs=False)
     assert ev.metrics["cat"].tp == 1
     g, p = ev.get_dfs_visualization()
@@ -239,9 +237,7 @@ def test_exact_zero_tp_backend_adapter() -> None:
             confidence_optimization="per_class",
         ),
     )
-    value = DetectionMetrics(
-        precision=0, recall=0, f1=0, ap50=0, ap75=0, ap50_95=0, tp=0, fp=4, fn=1
-    )
+    value = DetectionMetrics(precision=0, recall=0, f1=0, ap50=0, ap75=0, ap50_95=0, tp=0, fp=4, fn=1)
     metric = engine._adapt({"cat": value}, gt)["cat"]
     assert metric.counts_observed and metric.fp == 4 and metric.fn == 1
     assert metric.precision_ci_upper > 0
@@ -266,9 +262,7 @@ def test_warning_filters_are_not_changed_by_import() -> None:
 
 
 @pytest.mark.parametrize("failure", [False, True])
-def test_inference_releases_results_before_allocator_cleanup(
-    monkeypatch: pytest.MonkeyPatch, *, failure: bool
-) -> None:
+def test_inference_releases_results_before_allocator_cleanup(monkeypatch: pytest.MonkeyPatch, *, failure: bool) -> None:
     import sys
     import types
     import weakref

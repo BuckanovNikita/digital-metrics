@@ -14,9 +14,7 @@ from digital_metrics.types import PredictMatch
 
 
 def _mk(pred_label: str, gt_label: str, conf: float) -> PredictMatch:
-    return PredictMatch(
-        pred_label=pred_label, gt_label=gt_label, pred_index=0, gt_index=0, confidence=conf
-    )
+    return PredictMatch(pred_label=pred_label, gt_label=gt_label, pred_index=0, gt_index=0, confidence=conf)
 
 
 def _realized_f1(matches: dict[str, list[PredictMatch]], c: str, thr: float) -> float:

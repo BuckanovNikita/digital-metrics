@@ -133,23 +133,16 @@ def test_incremental_calibration_equals_full_rematching(backend: str, mode: str)
         counts = operating_points.raw_counts(gt, preds, classes, None, calibrated, backend)
         realized = sum(Fraction(2 * tp, 2 * tp + fp + fn) for tp, fp, fn in counts.values())
         for name in classes:
-            for candidate in set(preds.loc[preds.instance_label == name, "confidence"]) | {
-                max(candidates)
-            }:
+            for candidate in set(preds.loc[preds.instance_label == name, "confidence"]) | {max(candidates)}:
                 proposed = operating_points.raw_counts(
                     gt, preds, classes, None, calibrated | {name: candidate}, backend
                 )
-                assert (
-                    sum(Fraction(2 * tp, 2 * tp + fp + fn) for tp, fp, fn in proposed.values())
-                    <= realized
-                )
+                assert sum(Fraction(2 * tp, 2 * tp + fp + fn) for tp, fp, fn in proposed.values()) <= realized
 
 
 def test_coco_float32_xywh_conversion() -> None:
     gt = pd.DataFrame([["i", "cat", -100000000, 0, 1, 10]], columns=COLS)
-    preds = pd.DataFrame(
-        [["i", "cat", -100000000, 0, -50000000, 10, 0.5]], columns=COLS + ["confidence"]
-    )
+    preds = pd.DataFrame([["i", "cat", -100000000, 0, -50000000, 10, 0.5]], columns=COLS + ["confidence"])
     assert operating_points.raw_counts(gt, preds, ["cat"], None, 0.5, "torchmetrics")["cat"] == (
         1,
         0,
@@ -160,9 +153,7 @@ def test_coco_float32_xywh_conversion() -> None:
 def test_thresholded_class_absent_from_gt_retains_observed_fp_counts() -> None:
     gt = pd.DataFrame([["i", "cat", 0, 0, 10, 10]], columns=COLS)
     preds = pd.DataFrame([["i", "dog", 0, 0, 10, 10, 0.5]], columns=COLS + ["confidence"])
-    result = operating_points.complete_counts(
-        {}, gt, preds, ["cat", "dog"], None, 0.5, "torchmetrics"
-    )
+    result = operating_points.complete_counts({}, gt, preds, ["cat", "dog"], None, 0.5, "torchmetrics")
     assert (result["dog"].tp, result["dog"].fp, result["dog"].fn) == (0, 1, 0)
     assert np.isnan(result["dog"].ap50)
 
@@ -187,11 +178,7 @@ def test_mixed_class_coordinate_search_reuses_iou_and_changed_images(
     ]
     gt = pd.DataFrame([[str(i), *row] for i in range(size) for row in target_rows], columns=COLS)
     preds = pd.DataFrame(
-        [
-            [str(i), *row[:-1], row[-1] * (0.5 + 0.5 * i / (size + 1))]
-            for i in range(size)
-            for row in prediction_rows
-        ],
+        [[str(i), *row[:-1], row[-1] * (0.5 + 0.5 * i / (size + 1))] for i in range(size) for row in prediction_rows],
         columns=COLS + ["confidence"],
     )
     original_iou, original_counts = metrics.box_iou, operating_points._group_counts

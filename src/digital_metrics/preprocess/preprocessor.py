@@ -84,8 +84,5 @@ class PredictionPreprocessor:
                 same_class_containment_threshold=cont if cont is not None else _NMS_DISABLED,
                 cross_class_iou_threshold=iou if iou is not None else _NMS_DISABLED,
             )
-            logger.info(
-                f"Predictions NMS removed {n_before - len(result)} rows "
-                f"(containment={cont}, iou={iou})."
-            )
+            logger.info(f"Predictions NMS removed {n_before - len(result)} rows (containment={cont}, iou={iou}).")
         return result

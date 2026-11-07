@@ -79,9 +79,7 @@ def collect_means(
     for backend in ("ultralytics", "torchmetrics"):
         try:
             res = compute_detection_metrics(test_gt, test_preds, backend=backend, classes=classes)
-            ways[backend] = {
-                c: (m.precision, m.recall, m.f1, m.ap50, m.ap50_95) for c, m in res.items()
-            }
+            ways[backend] = {c: (m.precision, m.recall, m.f1, m.ap50, m.ap50_95) for c, m in res.items()}
         except ImportError as exc:
             logger.warning(f"[{backend}] skipped — {exc}")
 
@@ -163,9 +161,7 @@ def _idx_at(conf: np.ndarray, thr: float) -> int:
     return int((conf >= thr).sum()) - 1
 
 
-def plot_pr_curve(
-    ev: Evaluation, test_gt: pd.DataFrame, test_preds: pd.DataFrame, shared: list[str]
-) -> Path:
+def plot_pr_curve(ev: Evaluation, test_gt: pd.DataFrame, test_preds: pd.DataFrame, shared: list[str]) -> Path:
     matches = match_boxes(
         test_gt,
         test_preds,
@@ -212,9 +208,7 @@ def plot_pr_curve(
         if not np.isnan(pp[idx]):
             ax.text(0.975, pp[idx], f"F1={f}", color="grey", fontsize=8, va="center")
 
-    ax.step(
-        recall, precision, where="post", color="#4C72B0", lw=1.6, label="raw P-R curve (realizable)"
-    )
+    ax.step(recall, precision, where="post", color="#4C72B0", lw=1.6, label="raw P-R curve (realizable)")
     ax.plot(
         recall,
         envelope,

@@ -55,10 +55,7 @@ def f(iou_threshold: float, save_path: str) -> None:
 
     n_corrupted = int((preds_df["confidence"] < 0.5).sum())
     print(f"\n{'#' * 72}")
-    print(
-        f"# iou_threshold={iou_threshold}  "
-        f"(corrupted {n_corrupted}/{len(preds_df)} preds → 'Кромка')"
-    )
+    print(f"# iou_threshold={iou_threshold}  (corrupted {n_corrupted}/{len(preds_df)} preds → 'Кромка')")
     print("#" * 72)
 
     ev = Evaluation(preds_df, split_df, iou_threshold=iou_threshold)
@@ -66,9 +63,7 @@ def f(iou_threshold: float, save_path: str) -> None:
 
     # Per-class metrics
     for cls, m in ev.metrics.items():
-        print(
-            f"{cls}: P={m.precision:.3f}  R={m.recall:.3f}  F1={m.f1_score:.3f}  mAP50={m.ap50:.3f}"
-        )
+        print(f"{cls}: P={m.precision:.3f}  R={m.recall:.3f}  F1={m.f1_score:.3f}  mAP50={m.ap50:.3f}")
 
     # Confidence thresholds chosen to maximise per-class F1
     print("best_confidences:", {k: round(v, 3) for k, v in ev.best_confidences.items()})

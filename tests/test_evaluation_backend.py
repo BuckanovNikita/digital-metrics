@@ -73,16 +73,12 @@ def test_confusion_process_batch_counts_tp_fp_fn() -> None:
 def test_confusion_process_batch_empty_branches() -> None:
     # No GT → all detections are FP in the background column.
     fp_only = np.zeros((2, 2), dtype=np.int64)
-    _confusion_process_batch(
-        fp_only, np.array([0]), np.array([], dtype=int), np.zeros((0, 1)), 0.45, 1
-    )
+    _confusion_process_batch(fp_only, np.array([0]), np.array([], dtype=int), np.zeros((0, 1)), 0.45, 1)
     assert fp_only[0, 1] == 1 and fp_only.sum() == 1
 
     # No detections → every GT is a FN in the background row.
     fn_only = np.zeros((2, 2), dtype=np.int64)
-    _confusion_process_batch(
-        fn_only, np.array([], dtype=int), np.array([0]), np.zeros((1, 0)), 0.45, 1
-    )
+    _confusion_process_batch(fn_only, np.array([], dtype=int), np.array([0]), np.zeros((1, 0)), 0.45, 1)
     assert fn_only[1, 0] == 1 and fn_only.sum() == 1
 
 
@@ -94,12 +90,8 @@ def test_adapt_detection_metrics_reproduces_backend_numbers(
     ev._define_gt("all")
 
     det = {
-        "class_a": DetectionMetrics(
-            precision=0.8, recall=0.6, f1=_f1(0.8, 0.6), ap50=0.7, ap75=0.5, ap50_95=0.55
-        ),
-        "class_b": DetectionMetrics(
-            precision=1.0, recall=0.5, f1=_f1(1.0, 0.5), ap50=0.9, ap75=0.8, ap50_95=0.6
-        ),
+        "class_a": DetectionMetrics(precision=0.8, recall=0.6, f1=_f1(0.8, 0.6), ap50=0.7, ap75=0.5, ap50_95=0.55),
+        "class_b": DetectionMetrics(precision=1.0, recall=0.5, f1=_f1(1.0, 0.5), ap50=0.9, ap75=0.8, ap50_95=0.6),
         # class_c deliberately omitted → exercises the "missing/absent" branch.
     }
 
@@ -137,17 +129,13 @@ def test_backend_metrics_drive_dashboards_without_cm(
     ev.metrics = _adapt_via_engine(
         ev,
         {
-            c: DetectionMetrics(
-                precision=0.8, recall=0.6, f1=_f1(0.8, 0.6), ap50=0.7, ap75=0.5, ap50_95=0.55
-            )
+            c: DetectionMetrics(precision=0.8, recall=0.6, f1=_f1(0.8, 0.6), ap50=0.7, ap75=0.5, ap50_95=0.55)
             for c in ev.classes
         },
     )
     ev.cm = None  # native-only; cleared in backend mode
 
-    devs, dtrk = ev.get_dashboards(
-        save_to_excel=False, save_confusion_matrix=False, path=str(tmp_path)
-    )
+    devs, dtrk = ev.get_dashboards(save_to_excel=False, save_confusion_matrix=False, path=str(tmp_path))
     assert not devs.empty
     assert "Недобраковка" in dtrk.columns
     assert set(devs.index) == set(ev.classes)

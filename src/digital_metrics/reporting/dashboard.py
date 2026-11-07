@@ -127,9 +127,7 @@ def plot_confidence_intervals(
     return fig, ax
 
 
-def _dashboard_frames(
-    metrics: dict[str, Metrics], split_df: pd.DataFrame
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+def _dashboard_frames(metrics: dict[str, Metrics], split_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     metrics_df = _metrics_as_df(metrics)
     metrics_df["confidence"] = metrics_df["confidence"].apply(lambda x: round(x, 2))
 
@@ -315,9 +313,7 @@ def render_evaluation(
         destination = destinations[metric]
         try:
             if caption is not None:
-                wrapped = "\n".join(
-                    line for value in caption.splitlines() for line in wrap(value, width=100)
-                )
+                wrapped = "\n".join(line for value in caption.splitlines() for line in wrap(value, width=100))
                 figure.suptitle(wrapped, y=1.03, va="bottom", fontsize=10, parse_math=False)
             destination.parent.mkdir(parents=True, exist_ok=True)
             figure.savefig(
@@ -331,16 +327,12 @@ def render_evaluation(
         plots[metric] = RenderedPlot(destination, caption, figure, axes)
     dashboard_path = destinations["dashboard"] if save_to_excel else None
     dtrk_path = destinations["dtrk_dashboard"] if save_to_excel else None
-    matrix_path = (
-        destinations["confusion_matrix"] if save_confusion_matrix and cm is not None else None
-    )
+    matrix_path = destinations["confusion_matrix"] if save_confusion_matrix and cm is not None else None
     for frame, workbook_path in ((dashboard, dashboard_path), (dtrk, dtrk_path)):
         if workbook_path is not None:
             workbook_path.parent.mkdir(parents=True, exist_ok=True)
             _write_literal_excel(frame, str(workbook_path))
     if matrix_path is not None:
         matrix_path.parent.mkdir(parents=True, exist_ok=True)
-        _write_literal_excel(
-            pd.DataFrame(cm, index=class_labels, columns=class_labels), str(matrix_path)
-        )
+        _write_literal_excel(pd.DataFrame(cm, index=class_labels, columns=class_labels), str(matrix_path))
     return RenderedEvaluation(dashboard, dtrk, dashboard_path, dtrk_path, matrix_path, plots)

@@ -327,9 +327,7 @@ def test_both_preds_and_weights_warns_at_init(
     tiny_dataset: tuple[pd.DataFrame, pd.DataFrame],
 ) -> None:
     gt_df, preds_df = tiny_dataset
-    msgs = _capture_warnings(
-        lambda: Evaluation(preds_df, gt_df, iou_threshold=0.5, weights_path="best.pt")
-    )
+    msgs = _capture_warnings(lambda: Evaluation(preds_df, gt_df, iou_threshold=0.5, weights_path="best.pt"))
     assert any("ignoring weights_path" in m for m in msgs)
 
 
