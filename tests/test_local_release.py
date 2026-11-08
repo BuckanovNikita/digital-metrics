@@ -41,10 +41,11 @@ def retry(repo: Path) -> subprocess.CompletedProcess[str]:
     return command(repo, sys.executable, str(HELPER), check=False)
 
 
-def commit(repo: Path, message: str) -> None:
+def commit_and_release(repo: Path, message: str) -> None:
     (repo / "change.txt").write_text(message + "\n")
     git(repo, "add", "change.txt")
     git(repo, "commit", "-m", message)
+    retry(repo)  # Failure-recovery scenarios inspect the retained state below.
 
 
 @pytest.fixture
@@ -69,11 +70,7 @@ def release_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (repo / "docs").mkdir()
     shutil.copyfile(ROOT / "docs/changelog-history.md", repo / "docs/changelog-history.md")
     command(repo, "uv", "lock", "--offline")
-    # Use the real post-commit hook definition, substituting only the already-installed
-    # interpreter so fixture projects need no environment installation or network.
     config = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
-    release_hook = next(hook for item in config["repos"] for hook in item["hooks"] if hook["id"] == "local-release")
-    release_hook["entry"] = f'{sys.executable} "{HELPER}"'
     config["repos"] = [
         {
             "repo": "local",
@@ -86,7 +83,6 @@ def release_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
                     "always_run": True,
                     "pass_filenames": False,
                 },
-                release_hook,
             ],
         }
     ]
@@ -117,7 +113,7 @@ def release_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 )
 def test_commit_updates_metadata_and_tags_once(release_repo: Path, message: str, version: str) -> None:
     repo = release_repo
-    commit(repo, message)
+    commit_and_release(repo, message)
     assert git(repo, "log", "-1", "--format=%s") == f"chore(release): {version}"
     assert git(repo, "rev-parse", f"v{version}^{{commit}}") == git(repo, "rev-parse", "HEAD")
     assert git(repo, "cat-file", "-t", f"v{version}") == "tag"
@@ -143,7 +139,7 @@ def test_commit_updates_metadata_and_tags_once(release_repo: Path, message: str,
 
 
 def test_docs_only_commit_does_not_release(release_repo: Path) -> None:
-    commit(release_repo, "docs: explain usage")
+    commit_and_release(release_repo, "docs: explain usage")
     result = retry(release_repo)
     assert result.returncode == 0, result.stderr
     assert git(release_repo, "rev-list", "--count", "HEAD") == "2"
@@ -186,7 +182,7 @@ def test_dirty_metadata_is_preserved(release_repo: Path, *, staged: bool) -> Non
 def test_failed_quality_check_leaves_original_commit_and_no_tag(release_repo: Path) -> None:
     repo = release_repo
     (repo / ".git/reject-release").touch()
-    commit(repo, "fix: rejected version update")
+    commit_and_release(repo, "fix: rejected version update")
     assert git(repo, "log", "-1", "--format=%s") == "fix: rejected version update"
     assert git(repo, "tag", "--list") == "v0.5.3"
     assert tomllib.loads((repo / "pyproject.toml").read_text())["project"]["version"] == "0.5.4"
@@ -196,6 +192,7 @@ def test_failed_quality_check_leaves_original_commit_and_no_tag(release_repo: Pa
     # Contributor inspects retained edits and completes the exact metadata commit.
     git(repo, "add", "pyproject.toml", "uv.lock", "CHANGELOG.md")
     git(repo, "commit", "-m", "chore(release): 0.5.4")
+    assert retry(repo).returncode == 0
     assert git(repo, "rev-parse", "v0.5.4^{commit}") == git(repo, "rev-parse", "HEAD")
     assert git(repo, "rev-list", "--count", "HEAD") == "3"
 
@@ -244,7 +241,7 @@ def refuse_tag(repo: Path) -> Path:
 def test_tag_failure_retries_without_another_commit(release_repo: Path) -> None:
     repo = release_repo
     hook = refuse_tag(repo)
-    commit(repo, "fix: tag temporarily unavailable")
+    commit_and_release(repo, "fix: tag temporarily unavailable")
     head = git(repo, "rev-parse", "HEAD")
     assert git(repo, "log", "-1", "--format=%s") == "chore(release): 0.5.4"
     assert git(repo, "tag", "--list") == "v0.5.3"
@@ -262,7 +259,7 @@ def test_tag_failure_retries_without_another_commit(release_repo: Path) -> None:
 def test_retry_still_requires_passing_checks(release_repo: Path) -> None:
     repo = release_repo
     hook = refuse_tag(repo)
-    commit(repo, "fix: retry requires validation")
+    commit_and_release(repo, "fix: retry requires validation")
     hook.unlink()
     (repo / ".git/reject-release").touch()
     result = retry(repo)
@@ -274,7 +271,7 @@ def test_retry_still_requires_passing_checks(release_repo: Path) -> None:
 def test_retry_does_not_overwrite_conflicting_tag(release_repo: Path) -> None:
     repo = release_repo
     hook = refuse_tag(repo)
-    commit(repo, "fix: colliding version tag")
+    commit_and_release(repo, "fix: colliding version tag")
     hook.unlink()
     git(repo, "tag", "-a", "v0.5.4", "HEAD~1", "-m", "conflicting")
     previous = git(repo, "rev-parse", "v0.5.4")
@@ -287,9 +284,9 @@ def test_retry_does_not_overwrite_conflicting_tag(release_repo: Path) -> None:
 def test_stale_attempt_does_not_tag_unrelated_commit(release_repo: Path) -> None:
     repo = release_repo
     hook = refuse_tag(repo)
-    commit(repo, "fix: record a release attempt")
+    commit_and_release(repo, "fix: record a release attempt")
     hook.unlink()
-    commit(repo, "docs: unrelated follow-up")
+    commit_and_release(repo, "docs: unrelated follow-up")
     result = retry(repo)
     assert result.returncode == 1
     assert "recorded source" in result.stderr.lower()
@@ -299,7 +296,7 @@ def test_stale_attempt_does_not_tag_unrelated_commit(release_repo: Path) -> None
 def test_untracked_files_are_not_committed(release_repo: Path) -> None:
     repo = release_repo
     (repo / "private.txt").write_text("unrelated work\n")
-    commit(repo, "fix: preserve private files")
+    commit_and_release(repo, "fix: preserve private files")
     assert git(repo, "ls-files", "private.txt") == ""
     assert (repo / "private.txt").read_text() == "unrelated work\n"
     assert git(repo, "tag", "--list", "v0.5.4") == "v0.5.4"
@@ -308,11 +305,11 @@ def test_untracked_files_are_not_committed(release_repo: Path) -> None:
 def test_existing_unreleased_history_is_included(release_repo: Path) -> None:
     repo = release_repo
     git(repo, "switch", "-c", "feature/new-api")
-    commit(repo, "feat!: new interface")
+    commit_and_release(repo, "feat!: new interface")
     assert git(repo, "tag", "--list") == "v0.5.3"
     git(repo, "switch", "main")
     git(repo, "merge", "--ff-only", "feature/new-api")
-    commit(repo, "docs: describe interface")
+    commit_and_release(repo, "docs: describe interface")
     assert git(repo, "log", "-1", "--format=%s") == "chore(release): 0.6.0"
 
 
@@ -334,7 +331,7 @@ def test_lock_refresh_cannot_upgrade_dependencies(release_repo: Path, monkeypatc
 
     repo = release_repo
     git(repo, "switch", "-c", "feature/fix")
-    commit(repo, "fix: test dependency drift")
+    commit_and_release(repo, "fix: test dependency drift")
     git(repo, "switch", "main")
     git(repo, "merge", "--ff-only", "feature/fix")
     original = local_release.run
@@ -362,6 +359,7 @@ def test_commit_index_modes_leave_a_clean_release(release_repo: Path, mode: str)
         git(repo, "commit", "-am", "fix: commit all tracked changes")
     else:
         git(repo, "commit", "--only", "check.py", "-m", "fix: commit selected path")
+    assert retry(repo).returncode == 0
     assert git(repo, "log", "-1", "--format=%s") == "chore(release): 0.5.4"
     assert git(repo, "status", "--porcelain", "--untracked-files=no") == ""
     assert git(repo, "rev-parse", "v0.5.4^{commit}") == git(repo, "rev-parse", "HEAD")
@@ -372,7 +370,7 @@ def test_installed_hook_preserves_unstaged_work(release_repo: Path) -> None:
     path = repo / "pyproject.toml"
     original = path.read_text() + "\n# unfinished contributor edit\n"
     path.write_text(original)
-    commit(repo, "fix: partial commit with unrelated work")
+    commit_and_release(repo, "fix: partial commit with unrelated work")
     assert git(repo, "log", "-1", "--format=%s") == "fix: partial commit with unrelated work"
     assert git(repo, "tag", "--list") == "v0.5.3"
     assert path.read_text() == original
@@ -381,7 +379,7 @@ def test_installed_hook_preserves_unstaged_work(release_repo: Path) -> None:
 
 def test_amend_does_not_automatically_release(release_repo: Path) -> None:
     repo = release_repo
-    commit(repo, "docs: original message")
+    commit_and_release(repo, "docs: original message")
     git(repo, "commit", "--amend", "-m", "fix: amended message")
     assert git(repo, "tag", "--list") == "v0.5.3"
     assert git(repo, "log", "-1", "--format=%s") == "fix: amended message"
@@ -390,7 +388,7 @@ def test_amend_does_not_automatically_release(release_repo: Path) -> None:
 def test_single_cherry_pick_does_not_automatically_release(release_repo: Path) -> None:
     repo = release_repo
     git(repo, "switch", "-c", "feature/cherry")
-    commit(repo, "fix: cherry-picked change")
+    commit_and_release(repo, "fix: cherry-picked change")
     source = git(repo, "rev-parse", "HEAD")
     git(repo, "switch", "main")
     git(repo, "cherry-pick", source)
@@ -406,7 +404,7 @@ def test_concurrent_staging_is_not_included_in_release_commit(
 
     repo = release_repo
     git(repo, "switch", "-c", "feature/concurrent")
-    commit(repo, "fix: concurrent contributor")
+    commit_and_release(repo, "fix: concurrent contributor")
     git(repo, "switch", "main")
     git(repo, "merge", "--ff-only", "feature/concurrent")
     original = local_release.run
@@ -431,8 +429,7 @@ def test_installer_preserves_existing_custom_hook(release_repo: Path) -> None:
     original = "#!/bin/sh\n# contributor hook\nexit 0\n"
     hook.write_text(original)
     result = command(repo, sys.executable, str(HELPER), "--install-hooks", check=False)
-    assert result.returncode == 1
-    assert "not owned" in result.stderr
+    assert result.returncode == 0, result.stderr
     assert hook.read_text() == original
     assert git(repo, "tag", "--list") == "v0.5.3"
 
@@ -442,7 +439,7 @@ def test_unreachable_tag_conflict_does_not_stamp_metadata(release_repo: Path) ->
     tree = git(repo, "rev-parse", "HEAD^{tree}")
     other = git(repo, "commit-tree", tree, "-m", "chore: unrelated history")
     git(repo, "tag", "-a", "v0.5.4", other, "-m", "other branch release")
-    commit(repo, "fix: conflicting next version")
+    commit_and_release(repo, "fix: conflicting next version")
     result = retry(repo)
     assert result.returncode == 1
     assert "conflict" in result.stderr.lower()
@@ -451,23 +448,11 @@ def test_unreachable_tag_conflict_does_not_stamp_metadata(release_repo: Path) ->
     assert git(repo, "status", "--porcelain", "--untracked-files=no") == ""
 
 
-def install_changelog_hook(repo: Path) -> None:
-    config = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
-    hook = next(hook for item in config["repos"] for hook in item["hooks"] if hook["id"] == "changelog")
-    hook["entry"] = f'{sys.executable} "{HELPER}" --changelog'
-    path = repo / ".pre-commit-config.yaml"
-    fixture_config = yaml.safe_load(path.read_text())
-    fixture_config["repos"][0]["hooks"].insert(0, hook)
-    path.write_text(yaml.safe_dump(fixture_config))
-    git(repo, "add", ".pre-commit-config.yaml")
-
-
-def test_pre_commit_refreshes_history_without_staging(release_repo: Path) -> None:
+def test_explicit_changelog_refreshes_history_without_staging(release_repo: Path) -> None:
     repo = release_repo
     git(repo, "switch", "-c", "feature/changelog")
-    commit(repo, "feat: historical change")
-    install_changelog_hook(repo)
-    result = command(repo, "prek", "run", "--all-files", check=False)
+    commit_and_release(repo, "feat: historical change")
+    result = command(repo, sys.executable, str(HELPER), "--changelog", check=False)
     assert result.returncode == 1
     changelog = (repo / "CHANGELOG.md").read_text()
     assert "historical change" in changelog.casefold()
@@ -475,20 +460,19 @@ def test_pre_commit_refreshes_history_without_staging(release_repo: Path) -> Non
     assert "[0.5.3]" in changelog
     assert git(repo, "ls-files", "CHANGELOG.md") == ""
     git(repo, "add", "CHANGELOG.md")
-    result = command(repo, "prek", "run", "--all-files", check=False)
+    result = command(repo, sys.executable, str(HELPER), "--changelog", check=False)
     assert result.returncode == 0, result.stdout + result.stderr
     assert (repo / "CHANGELOG.md").read_text() == changelog
     assert git(repo, "rev-list", "--count", "HEAD") == "2"
 
 
-def test_changelog_hook_preserves_release_and_tag_retry(release_repo: Path) -> None:
+def test_explicit_changelog_preserves_release_and_tag_retry(release_repo: Path) -> None:
     repo = release_repo
-    install_changelog_hook(repo)
     result = command(repo, sys.executable, str(HELPER), "--changelog", check=False)
     assert result.returncode == 1
     git(repo, "add", "CHANGELOG.md")
     hook = refuse_tag(repo)
-    commit(repo, "fix: finalized release entry")
+    commit_and_release(repo, "fix: finalized release entry")
     head = git(repo, "rev-parse", "HEAD")
     assert git(repo, "log", "-1", "--format=%s") == "chore(release): 0.5.4"
     changelog = (repo / "CHANGELOG.md").read_text()
@@ -496,13 +480,13 @@ def test_changelog_hook_preserves_release_and_tag_retry(release_repo: Path) -> N
     assert "finalized release entry" in changelog.casefold()
     assert "Unreleased" not in changelog
     # Manual pre-commit during recovery must preserve the untagged release section.
-    command(repo, "prek", "run", "--all-files")
+    command(repo, sys.executable, str(HELPER), "--changelog")
     assert (repo / "CHANGELOG.md").read_text() == changelog
     hook.unlink()
     result = retry(repo)
     assert result.returncode == 0, result.stderr
     assert git(repo, "rev-parse", "v0.5.4^{commit}") == head
-    result = command(repo, "prek", "run", "--all-files", check=False)
+    result = command(repo, sys.executable, str(HELPER), "--changelog", check=False)
     assert result.returncode == 0, result.stdout + result.stderr
     assert (repo / "CHANGELOG.md").read_text() == changelog
 
@@ -510,7 +494,7 @@ def test_changelog_hook_preserves_release_and_tag_retry(release_repo: Path) -> N
 def test_recovery_rejects_changed_changelog(release_repo: Path) -> None:
     repo = release_repo
     (repo / ".git/reject-release").touch()
-    commit(repo, "fix: protect release notes")
+    commit_and_release(repo, "fix: protect release notes")
     path = repo / "CHANGELOG.md"
     path.write_text(path.read_text() + "\nUnreviewed addition\n")
     (repo / ".git/reject-release").unlink()
@@ -525,7 +509,7 @@ def test_recovery_rejects_changed_changelog(release_repo: Path) -> None:
 def test_release_preserves_curated_history(release_repo: Path) -> None:
     repo = release_repo
     original = (repo / "docs/changelog-history.md").read_text()
-    commit(repo, "fix: preserve curated release notes")
+    commit_and_release(repo, "fix: preserve curated release notes")
     changelog = (repo / "CHANGELOG.md").read_text()
     assert changelog.endswith(original)
     assert changelog.count("## [0.5.3]") == 1
@@ -533,3 +517,61 @@ def test_release_preserves_curated_history(release_repo: Path) -> None:
     result = command(repo, sys.executable, str(HELPER), "--changelog", check=False)
     assert result.returncode == 0, result.stderr
     assert (repo / "CHANGELOG.md").read_text() == changelog
+
+
+def test_commits_and_legacy_launcher_do_not_release(release_repo: Path) -> None:
+    repo = release_repo
+    (repo / "change.txt").write_text("ordinary contributor change\n")
+    git(repo, "add", "change.txt")
+    git(repo, "commit", "-m", "fix: ordinary contributor change")
+    before = git(repo, "rev-parse", "HEAD")
+    tags = git(repo, "tag", "--list")
+    result = command(repo, sys.executable, str(HELPER), "--post-commit")
+    assert result.returncode == 0
+    assert git(repo, "rev-parse", "HEAD") == before
+    assert git(repo, "tag", "--list") == tags
+    assert git(repo, "rev-list", "--count", "HEAD") == "2"
+    assert not (repo / "CHANGELOG.md").exists()
+
+
+def test_installer_retires_owned_launcher_only(release_repo: Path) -> None:
+    repo = release_repo
+    hook = repo / ".git/hooks/post-commit"
+    hook.write_text(
+        "#!/usr/bin/env bash\n# digital-metrics: local-release post-commit launcher\n"
+        "exec /tmp/tools/prek run --hook-stage post-commit --all-files\n"
+    )
+    command(repo, sys.executable, str(HELPER), "--install-hooks")
+    assert not hook.exists()
+    command(repo, sys.executable, str(HELPER), "--install-hooks")
+    assert not (repo / ".git/hooks/pre-commit.legacy").exists()
+
+
+def test_installer_preserves_foreign_pre_commit(release_repo: Path) -> None:
+    repo = release_repo
+    hook = repo / ".git/hooks/pre-commit"
+    original = "#!/bin/sh\n# contributor check\nexit 0\n"
+    hook.write_text(original)
+    result = command(repo, sys.executable, str(HELPER), "--install-hooks", check=False)
+    assert result.returncode == 1
+    assert hook.read_text() == original
+
+
+@pytest.mark.parametrize("kind", ["edited", "symlink"])
+def test_installer_preserves_modified_owned_launcher(release_repo: Path, kind: str) -> None:
+    repo = release_repo
+    hook = repo / ".git/hooks/post-commit"
+    content = (
+        "#!/usr/bin/env bash\n# digital-metrics: local-release post-commit launcher\n"
+        "exec /tmp/tools/prek run --hook-stage post-commit --all-files\n"
+    )
+    if kind == "edited":
+        content += "# contributor extension\n"
+        hook.write_text(content)
+    else:
+        target = repo / ".git/contributor-hook"
+        target.write_text(content)
+        hook.symlink_to(target)
+    command(repo, sys.executable, str(HELPER), "--install-hooks")
+    assert hook.read_text() == content
+    assert hook.is_symlink() == (kind == "symlink")

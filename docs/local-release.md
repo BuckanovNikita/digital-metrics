@@ -11,8 +11,10 @@ uv sync --locked --dev
 uv run --locked --no-sync python scripts/local_release.py --install-hooks
 ```
 
-Installation enables `pre-commit` checks and a `post-commit` release hook. It
-does not create a release and refuses to overwrite a foreign `post-commit` hook.
+Installation enables `pre-commit` checks and removes only the project-marked legacy
+`post-commit` launcher. Foreign post-commit hooks remain untouched; foreign pre-commit
+hooks are refused. Reinstallation replaces generated checks rather than chaining them.
+Legacy `--post-commit` invocations are harmless no-ops. Installation creates no release.
 Hooks are local to the clone and must be installed in each checkout.
 
 ```bash
@@ -33,24 +35,24 @@ identifies the existing 0.5.3 version commit, not the new tooling commit.
 The helper updates only `pyproject.toml`, the root package version in `uv.lock`,
 and `CHANGELOG.md`. It verifies that dependency versions and sources did not
 change, then creates `chore(release): X.Y.Z` through the normal checks and an
-annotated `vX.Y.Z` tag. The release hook prevents recursion; checks remain enabled.
+annotated `vX.Y.Z` tag. The release guard prevents recursion; checks remain enabled.
 
 Releases skip other branches, detached HEAD, and active Git history operations.
-Automatic releases also skip amend, cherry-pick, revert and rebase commits.
+Contributor commits, amends and cherry-picks never invoke releases automatically.
 Dirty tracked files or staged changes defer the release without discarding them.
 Unrelated untracked files are retained and excluded from the release commit.
 
-## Automatic changelog
+## Explicit changelog
 
-The pre-commit hook regenerates `CHANGELOG.md` from committed history through
+The `--changelog` command regenerates `CHANGELOG.md` from committed history through
 [the template](../templates/CHANGELOG.md.j2). It shows pending commits under
 `Unreleased`, groups released commits by version and category, and excludes
 generated release commits. The curated notes through 0.5.3 are appended verbatim
 from [changelog history](changelog-history.md). Edit that source to correct older
 notes; manual changes to generated entries are overwritten.
 
-If generation changes the file, the hook stops without staging it. Review the
-result, stage `CHANGELOG.md`, and retry. The current commit is not in history
+If generation changes the file, the command returns without staging it. Review the
+result and commit the generated changes when intended. The current commit is not in history
 until committed; its entry appears during release preparation or the next
 refresh. `--changelog` returns 1 when it updates the file or encounters an error,
 and 0 when unchanged. Refresh works on named feature branches and skips detached
@@ -58,8 +60,7 @@ HEAD. During an unfinished release it preserves the prepared notes for recovery.
 
 ## Recovery
 
-A post-commit failure retains the original commit; Git may still report that
-commit as successful. Read the hook's output. If release checks fail, inspect
+An explicit release failure retains the original commit. If release checks fail, inspect
 and repair the retained metadata changes, then complete the exact release commit:
 
 ```bash
@@ -81,3 +82,16 @@ A shared `digital-metrics-release.lock` directory under
 After a crash, inspect its `owner.json` and confirm that the recorded process
 has stopped before manually removing a stale lock. Do not remove attempt state
 until its changes have been inspected and completed or canceled manually.
+
+## Contributor verification
+
+Hooks select checks from relevant source, fixture, dependency and tool-config paths.
+Split changes into coherent task-owned commits; targeted `SKIP=<hook IDs>` is allowed
+for expensive intermediate checks, while final verification remains outstanding.
+Keep mechanical formatting fixes separate. Inspect hook auto-fixes and restage only
+owned hunks. Never use `--no-verify` or blanket skips to hide failures.
+
+After the final task commit, unset `SKIP` and run
+`uv run --locked --no-sync prek run --all-files`. Whole-project hooks also select relevant deleted inputs. Reuse successful evidence while its inputs remain unchanged;
+rerun affected checks after relevant changes. Changelog and release commands remain
+separate explicit actions.

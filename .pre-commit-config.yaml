@@ -1,30 +1,35 @@
 # All checks use the project's locked development tools.
+minimum_prek_version: "0.5.10"
 default_install_hook_types: [pre-commit]
 default_stages: [pre-commit]
 
 repos:
   - repo: local
     hooks:
-      - id: changelog
-        name: Generate changelog from committed history
-        entry: uv run --locked --no-sync python scripts/local_release.py --changelog
+      - id: ruff
+        name: Ruff (changed Python files)
+        entry: uv run --locked --no-sync ruff check --force-exclude
         language: system
-        always_run: true
-        pass_filenames: false
+        types_or: [python, pyi]
+        exclude: '^(\.agents|agent|\.claude)/'
+        pass_filenames: true
         require_serial: true
 
-      - id: ruff
-        name: uv run ruff check .
+      - id: ruff-config
+        name: Ruff (configuration changes)
         entry: uv run --locked --no-sync ruff check .
         language: system
-        types_or: [python, pyi, toml]
+        files: '^(pyproject\.toml|ruff\.toml|\.ruff\.toml|uv\.lock|\.pre-commit-config\.yaml)$'
+        include_deleted: true
         pass_filenames: false
+        require_serial: true
 
       - id: mypy
         name: uv run mypy src/ scripts/local_release.py
         entry: uv run --locked --no-sync mypy src/ scripts/local_release.py
         language: system
-        types_or: [python, pyi, toml]
+        files: '^(src/.*\.pyi?$|scripts/local_release\.py$|pyproject\.toml$|mypy\.ini$|\.mypy\.ini$|uv\.lock$|\.pre-commit-config\.yaml$)'
+        include_deleted: true
         pass_filenames: false
         require_serial: true
 
@@ -32,15 +37,6 @@ repos:
         name: uv run pytest
         entry: uv run --locked --no-sync pytest
         language: system
-        types_or: [python, toml]
+        files: '^((src|tests|fixtures|scripts|templates)/|docs/changelog-history\.md$|pytest\.ini$|setup\.cfg$|tox\.ini$|pyproject\.toml$|uv\.lock$|\.pre-commit-config\.yaml$)'
+        include_deleted: true
         pass_filenames: false
-
-      - id: local-release
-        name: Create local semantic version commit and tag
-        entry: uv run --locked --no-sync python scripts/local_release.py
-        args: [--post-commit]
-        language: system
-        stages: [post-commit]
-        always_run: true
-        pass_filenames: false
-        require_serial: true
