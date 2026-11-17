@@ -15,12 +15,16 @@ Output: per-class `Metrics` objects, confusion matrix, Excel dashboards, CI plot
 | Fixed-population, paired-statistics or rendering APIs | [docs/shared-evaluation.md](docs/shared-evaluation.md) |
 | Why the 2026-10-04 contracts exist | [docs/review-remediation-2026-10-04.md](docs/review-remediation-2026-10-04.md) |
 
-## Issue tracker and delivery
+## Agent skills
 
-Active issues and plans live in Linear (team `SIP`, project `digital-metrics`). Delivery is a GitHub PR
-from a task branch: agents push the branch and open the PR, humans merge. Read
-[the tracker guidance](docs/agents/issue-tracker.md) before planning, picking up or delivering work.
-Readiness labels are in [triage labels](docs/agents/triage-labels.md).
+### Issue tracker
+
+Active issues and plans live in Linear (team `SIP`, project `digital-metrics`). Delivery is a GitHub PR from a task branch: agents push the branch and open the PR, humans merge. Read [the tracker guidance](docs/agents/issue-tracker.md) before planning, picking up or delivering work.
+
+### Triage labels
+
+Readiness and category roles are Linear labels, separate from lifecycle state. See
+[triage labels](docs/agents/triage-labels.md).
 
 ## Environment
 
