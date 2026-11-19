@@ -82,16 +82,3 @@ A shared `digital-metrics-release.lock` directory under
 After a crash, inspect its `owner.json` and confirm that the recorded process
 has stopped before manually removing a stale lock. Do not remove attempt state
 until its changes have been inspected and completed or canceled manually.
-
-## Contributor verification
-
-Hooks select checks from relevant source, fixture, dependency and tool-config paths.
-Split changes into coherent task-owned commits; targeted `SKIP=<hook IDs>` is allowed
-for expensive intermediate checks, while final verification remains outstanding.
-Keep mechanical formatting fixes separate. Inspect hook auto-fixes and restage only
-owned hunks. Never use `--no-verify` or blanket skips to hide failures.
-
-After the final task commit, unset `SKIP` and run
-`uv run --locked --no-sync prek run --all-files`. Whole-project hooks also select relevant deleted inputs. Reuse successful evidence while its inputs remain unchanged;
-rerun affected checks after relevant changes. Changelog and release commands remain
-separate explicit actions.
